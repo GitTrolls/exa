@@ -210,7 +210,7 @@ impl<'a> File<'a> {
         }
     }
 
-    pub fn file_colour(&self) -> Style {
+    fn file_colour(&self) -> Style {
         self.get_type().style()
     }
 

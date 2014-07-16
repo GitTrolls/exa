@@ -9,6 +9,15 @@ pub enum SortField {
     Name, Extension, Size
 }
 
+pub struct Options {
+    pub showInvisibles: bool,
+    pub sortField: SortField,
+    pub reverse: bool,
+    pub dirs: Vec<String>,
+    pub columns: Vec<Column>,
+    pub header: bool,
+}
+
 impl SortField {
     fn from_word(word: String) -> SortField {
         match word.as_slice() {
@@ -20,21 +29,6 @@ impl SortField {
     }
 }
 
-pub enum View {
-    Lines(Vec<Column>),
-    Grid(bool),
-}
-
-pub struct Options {
-    pub show_invisibles: bool,
-    pub sort_field: SortField,
-    pub reverse: bool,
-    pub dirs: Vec<String>,
-    pub view: View,
-    pub header: bool,
-}
-
-
 impl Options {
     pub fn getopts(args: Vec<String>) -> Result<Options, getopts::Fail_> {
         let opts = [
@@ -42,37 +36,26 @@ impl Options {
             getopts::optflag("b", "binary", "use binary prefixes in file sizes"),
             getopts::optflag("g", "group", "show group as well as user"),
             getopts::optflag("h", "header", "show a header row at the top"),
-            getopts::optflag("H", "links", "show number of hard links"),
-            getopts::optflag("l", "long", "display extended details and attributes"),
             getopts::optflag("i", "inode", "show each file's inode number"),
+            getopts::optflag("l", "links", "show number of hard links"),
             getopts::optflag("r", "reverse", "reverse order of files"),
             getopts::optopt("s", "sort", "field to sort by", "WORD"),
             getopts::optflag("S", "blocks", "show number of file system blocks"),
-            getopts::optflag("x", "across", "sort multi-column view entries across"),
         ];
 
         match getopts::getopts(args.tail(), opts) {
             Err(f) => Err(f),
             Ok(matches) => Ok(Options {
-                show_invisibles: matches.opt_present("all"),
+                showInvisibles: matches.opt_present("all"),
                 reverse: matches.opt_present("reverse"),
                 header: matches.opt_present("header"),
-                sort_field: matches.opt_str("sort").map(|word| SortField::from_word(word)).unwrap_or(Name),
+                sortField: matches.opt_str("sort").map(|word| SortField::from_word(word)).unwrap_or(Name),
                 dirs: if matches.free.is_empty() { vec![ ".".to_string() ] } else { matches.free.clone() },
-                view: Options::view(matches),
+                columns: Options::columns(matches),
             })
         }
     }
-    
-    fn view(matches: getopts::Matches) -> View {
-        if matches.opt_present("long") {
-            Lines(Options::columns(matches))
-        }
-        else {
-            Grid(matches.opt_present("across"))
-        }
-    }
-    
+
     fn columns(matches: getopts::Matches) -> Vec<Column> {
         let mut columns = vec![];
 
@@ -104,7 +87,7 @@ impl Options {
     }
 
     fn should_display(&self, f: &File) -> bool {
-        if self.show_invisibles {
+        if self.showInvisibles {
             true
         } else {
             !f.name.as_slice().starts_with(".")
@@ -116,7 +99,7 @@ impl Options {
             .filter(|&f| self.should_display(f))
             .collect();
 
-        match self.sort_field {
+        match self.sortField {
             Name => files.sort_by(|a, b| a.parts.cmp(&b.parts)),
             Size => files.sort_by(|a, b| a.stat.size.cmp(&b.stat.size)),
             Extension => files.sort_by(|a, b| {
