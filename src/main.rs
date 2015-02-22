@@ -1,7 +1,4 @@
-#![feature(collections, core, env, libc, old_io, old_path, plugin, std_misc)]
-// Other platforms then macos don’t need std_misc but you can’t 
-// use #[cfg] on features.
-#![allow(unused_features)] 
+#![feature(collections, core, env, libc, old_io, old_path, plugin)]
 
 extern crate ansi_term;
 extern crate datetime;
@@ -30,7 +27,6 @@ pub mod filetype;
 pub mod options;
 pub mod output;
 pub mod term;
-pub mod xattr;
 
 struct Exa<'a> {
     count:   usize,
