@@ -1,6 +1,7 @@
 use std::old_io::{fs, IoResult};
 use std::old_io as io;
 use std::ascii::AsciiExt;
+use std::env::current_dir;
 
 use ansi_term::{ANSIString, ANSIStrings, Colour, Style};
 use ansi_term::Style::Plain;
@@ -173,7 +174,7 @@ impl<'a> File<'a> {
     /// characters are 1 columns wide, but in some contexts, certain
     /// characters are actually 2 columns wide.
     pub fn file_name_width(&self) -> usize {
-        self.name.as_slice().width(true)
+        self.name.as_slice().width(false)
     }
 
     /// Assuming the current file is a symlink, follows the link and
@@ -319,7 +320,7 @@ impl<'a> File<'a> {
                 DateFormat::parse("{2>:D} {:M} {2>:h}:{02>:m}").unwrap()
             }
             else {
-                DateFormat::parse("{2>:D} {:M} {5>:Y}").unwrap()
+                DateFormat::parse("{2>:D} {:M} {4>:Y}").unwrap()
             };
 
         Cell::paint(Blue.normal(), format.format(date, locale).as_slice())
@@ -415,7 +416,8 @@ impl<'a> File<'a> {
 
     fn git_status(&self) -> Cell {
         let status = match self.dir {
-            Some(d) => d.git_status(&self.path, self.stat.kind == io::FileType::Directory),
+            Some(d) => d.git_status(&current_dir().unwrap_or(Path::new(".")).join(&self.path),
+                                    self.stat.kind == io::FileType::Directory),
             None    => GREY.paint("--").to_string(),
         };
 
