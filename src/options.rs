@@ -5,7 +5,6 @@ use column::Column::*;
 use output::{Grid, Details};
 use term::dimensions;
 
-use std::ascii::AsciiExt;
 use std::cmp::Ordering;
 use std::fmt;
 
@@ -118,13 +117,9 @@ impl FileFilter {
             SortField::Name => files.sort_by(|a, b| natord::compare(&*a.name, &*b.name)),
             SortField::Size => files.sort_by(|a, b| a.stat.size.cmp(&b.stat.size)),
             SortField::FileInode => files.sort_by(|a, b| a.stat.unstable.inode.cmp(&b.stat.unstable.inode)),
-            SortField::Extension => files.sort_by(|a, b| {
-                if a.ext.cmp(&b.ext) == Ordering::Equal {
-                    Ordering::Equal
-                }
-                else {
-                    a.name.to_ascii_lowercase().cmp(&b.name.to_ascii_lowercase())
-                }
+            SortField::Extension => files.sort_by(|a, b| match a.ext.cmp(&b.ext) {
+                Ordering::Equal => natord::compare(&*a.name, &*b.name),
+                order => order
             }),
             SortField::ModifiedDate => files.sort_by(|a, b| a.stat.modified.cmp(&b.stat.modified)),
             SortField::AccessedDate => files.sort_by(|a, b| a.stat.accessed.cmp(&b.stat.accessed)),
@@ -148,7 +143,7 @@ impl SortField {
 
     /// Find which field to use based on a user-supplied word.
     fn from_word(word: String) -> Result<SortField, Misfire> {
-        match word.as_slice() {
+        match &word[..] {
             "name" | "filename"  => Ok(SortField::Name),
             "size" | "filesize"  => Ok(SortField::Size),
             "ext"  | "extension" => Ok(SortField::Extension),
@@ -342,7 +337,7 @@ impl TimeTypes {
                 return Err(Misfire::Useless("accessed", true, "time"));
             }
 
-            match word.as_slice() {
+            match &word[..] {
                 "mod" | "modified"  => Ok(TimeTypes { accessed: false, modified: true, created: false }),
                 "acc" | "accessed"  => Ok(TimeTypes { accessed: true, modified: false, created: false }),
                 "cr"  | "created"   => Ok(TimeTypes { accessed: false, modified: false, created: true }),
