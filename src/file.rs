@@ -1,6 +1,7 @@
 use std::old_io::{fs, IoResult};
 use std::old_io as io;
 use std::ascii::AsciiExt;
+use std::env::current_dir;
 
 use ansi_term::{ANSIString, ANSIStrings, Colour, Style};
 use ansi_term::Style::Plain;
@@ -21,8 +22,6 @@ use column::Column::*;
 use dir::Dir;
 use filetype::HasType;
 use options::{SizeFormat, TimeType};
-use xattr;
-use xattr::Attribute;
 
 /// This grey value is directly in between white and black, so it's guaranteed
 /// to show up on either backgrounded terminal.
@@ -41,7 +40,6 @@ pub struct File<'a> {
     pub ext:   Option<String>,
     pub path:  Path,
     pub stat:  io::FileStat,
-    pub xattrs: Vec<Attribute>,
     pub this:  Option<Dir>,
 }
 
@@ -56,18 +54,7 @@ impl<'a> File<'a> {
 
     /// Create a new File object from the given Stat result, and other data.
     pub fn with_stat(stat: io::FileStat, path: &Path, parent: Option<&'a Dir>, recurse: bool) -> File<'a> {
-
-        // The filename to display is the last component of the path. However,
-        // the path has no components for `.`, `..`, and `/`, so in these
-        // cases, the entire path is used.
-        let bytes = match path.components().last() {
-            Some(b) => b,
-            None => path.as_vec(),
-        };
-
-        // Convert the string to UTF-8, replacing any invalid characters with
-        // replacement characters.
-        let filename = String::from_utf8_lossy(bytes);
+        let filename = path_filename(path);
 
         // If we are recursing, then the `this` field contains a Dir object
         // that represents the current File as a directory, if it is a
@@ -83,21 +70,20 @@ impl<'a> File<'a> {
             path:  path.clone(),
             dir:   parent,
             stat:  stat,
-            xattrs: xattr::llist(path).unwrap_or(Vec::new()),
-            name:  filename.to_string(),
-            ext:   ext(filename.as_slice()),
+            ext:   ext(&filename),
+            name:  filename,
             this:  this,
         }
     }
 
     /// Whether this file is a dotfile or not.
     pub fn is_dotfile(&self) -> bool {
-        self.name.as_slice().starts_with(".")
+        self.name.starts_with(".")
     }
 
     /// Whether this file is a temporary file or not.
     pub fn is_tmpfile(&self) -> bool {
-        let name = self.name.as_slice();
+        let name = &self.name;
         name.ends_with("~") || (name.starts_with("#") && name.ends_with("#"))
     }
 
@@ -149,16 +135,48 @@ impl<'a> File<'a> {
             };
 
             match self.target_file(&target_path) {
-                Ok(file) => format!("{} {} {}{}{}",
-                                   style.paint(name),
-                                   GREY.paint("=>"),
-                                   Cyan.paint(target_path.dirname_str().unwrap()),
-                                   Cyan.paint("/"),
-                                   file.file_colour().paint(file.name.as_slice())),
+                Ok(file) => {
+
+                    // Generate a preview for the path this symlink links to.
+                    // The preview should consist of the directory of the file
+                    // (if present) in cyan, an extra slash if necessary, then
+                    // the target file, colourised in the appropriate style.
+                    let mut path_prefix = String::new();
+
+                    // The root directory has the name "/", which has to be
+                    // catered for separately, otherwise there'll be two
+                    // slashes in the resulting output.
+                    if file.path.is_absolute() && file.name != "/" {
+                        path_prefix.push_str("/");
+                    }
+
+                    let path_bytes: Vec<&[u8]> = file.path.components().collect();
+                    if !path_bytes.is_empty() {
+                        // Use init() to add all but the last component of the
+                        // path to the prefix. init() panics when given an
+                        // empty list, hence the check.
+                        for component in path_bytes.init().iter() {
+                            let string = String::from_utf8_lossy(component).to_string();
+                            path_prefix.push_str(&string);
+                        }
+                    }
+
+                    // Only add a slash when there's something in the path
+                    // prefix so far.
+                    if path_bytes.len() > 1 {
+                        path_prefix.push_str("/");
+                    }
+
+                    format!("{} {} {}",
+                            style.paint(name),
+                            GREY.paint("=>"),
+                            ANSIStrings(&[ Cyan.paint(&path_prefix),
+                                           file.file_colour().paint(&file.name) ]))
+                },
                 Err(filename) => format!("{} {} {}",
                                          style.paint(name),
                                          Red.paint("=>"),
-                                         Red.underline().paint(filename.as_slice())),
+                                         Red.underline().paint(&filename)),
             }
         }
         else {
@@ -177,7 +195,7 @@ impl<'a> File<'a> {
     /// characters are 1 columns wide, but in some contexts, certain
     /// characters are actually 2 columns wide.
     pub fn file_name_width(&self) -> usize {
-        self.name.as_slice().width(false)
+        self.name.width(false)
     }
 
     /// Assuming the current file is a symlink, follows the link and
@@ -187,8 +205,7 @@ impl<'a> File<'a> {
     /// other end doesn't exist), returns the *filename* of the file
     /// that should be there.
     fn target_file(&self, target_path: &Path) -> Result<File, String> {
-        let v = target_path.filename().unwrap();
-        let filename = String::from_utf8_lossy(v);
+        let filename = path_filename(target_path);
 
         // Use stat instead of lstat - we *want* to follow links.
         if let Ok(stat) = fs::stat(target_path) {
@@ -196,9 +213,8 @@ impl<'a> File<'a> {
                 path:  target_path.clone(),
                 dir:   self.dir,
                 stat:  stat,
-                xattrs: xattr::list(target_path).unwrap_or(Vec::new()),
-                name:  filename.to_string(),
-                ext:   ext(filename.as_slice()),
+                ext:   ext(&filename),
+                name:  filename,
                 this:  None,
             })
         }
@@ -324,10 +340,10 @@ impl<'a> File<'a> {
                 DateFormat::parse("{2>:D} {:M} {2>:h}:{02>:m}").unwrap()
             }
             else {
-                DateFormat::parse("{2>:D} {:M} {4>:Y}").unwrap()
+                DateFormat::parse("{2>:D} {:M} {5>:Y}").unwrap()
             };
 
-        Cell::paint(Blue.normal(), format.format(date, locale).as_slice())
+        Cell::paint(Blue.normal(), &format.format(date, locale))
     }
 
     /// This file's type, represented by a coloured character.
@@ -343,15 +359,6 @@ impl<'a> File<'a> {
             io::FileType::Symlink       => Cyan.paint("l"),
             io::FileType::Unknown       => Plain.paint("?"),
         }
-    }
-
-    /// Marker indicating that the file contains extended attributes
-    ///
-    /// Returns “@” or  “ ” depending on wheter the file contains an extented 
-    /// attribute or not. Also returns “ ” in case the attributes cannot be read
-    /// for some reason.
-    fn attribute_marker(&self) -> ANSIString {
-        if self.xattrs.len() > 0 { Plain.paint("@") } else { Plain.paint(" ") }
     }
 
     /// Generate the "rwxrwxrwx" permissions string, like how ls does it.
@@ -377,7 +384,6 @@ impl<'a> File<'a> {
             File::permission_bit(&bits, io::OTHER_READ,    "r", Yellow.normal()),
             File::permission_bit(&bits, io::OTHER_WRITE,   "w", Red.normal()),
             File::permission_bit(&bits, io::OTHER_EXECUTE, "x", Green.normal()),
-            self.attribute_marker()
         ]).to_string();
 
         Cell { text: string, length: 10 }
@@ -403,7 +409,7 @@ impl<'a> File<'a> {
     /// valid without `foo.coffee`.
     pub fn get_source_files(&self) -> Vec<Path> {
         if let Some(ref ext) = self.ext {
-            match ext.as_slice() {
+            match &ext[..] {
                 "class" => vec![self.path.with_extension("java")],  // Java
                 "css"   => vec![self.path.with_extension("sass"),   self.path.with_extension("less")],  // SASS, Less
                 "elc"   => vec![self.path.with_extension("el")],    // Emacs Lisp
@@ -430,12 +436,28 @@ impl<'a> File<'a> {
 
     fn git_status(&self) -> Cell {
         let status = match self.dir {
-            Some(d) => d.git_status(&self.path, self.stat.kind == io::FileType::Directory),
+            Some(d) => d.git_status(&current_dir().unwrap_or(Path::new(".")).join(&self.path),
+                                    self.stat.kind == io::FileType::Directory),
             None    => GREY.paint("--").to_string(),
         };
 
         Cell { text: status, length: 2 }
     }
+}
+
+/// Extract the filename to display from a path, converting it from UTF-8
+/// lossily, into a String.
+///
+/// The filename to display is the last component of the path. However,
+/// the path has no components for `.`, `..`, and `/`, so in these
+/// cases, the entire path is used.
+fn path_filename(path: &Path) -> String {
+    let bytes = match path.components().last() {
+        Some(b) => b,
+        None => path.as_vec(),
+    };
+
+    String::from_utf8_lossy(bytes).to_string()
 }
 
 /// Extract an extension from a string, if one is present, in lowercase.
@@ -453,15 +475,29 @@ fn ext<'a>(name: &'a str) -> Option<String> {
 #[cfg(test)]
 pub mod test {
     pub use super::*;
+    pub use super::path_filename;
+
     pub use column::{Cell, Column};
     pub use std::old_io as io;
+    pub use output::details::UserLocale;
+
     pub use users::{User, Group};
     pub use users::mock::MockUsers;
 
     pub use ansi_term::Style::Plain;
     pub use ansi_term::Colour::Yellow;
 
-    pub use output::details::UserLocale;
+    #[test]
+    fn current_filename() {
+        let filename = path_filename(&Path::new("."));
+        assert_eq!(&filename[..], ".")
+    }
+
+    #[test]
+    fn parent_filename() {
+        let filename = path_filename(&Path::new(".."));
+        assert_eq!(&filename[..], "..")
+    }
 
     #[test]
     fn extension() {
