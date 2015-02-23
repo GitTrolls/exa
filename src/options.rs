@@ -4,7 +4,9 @@ use column::Column;
 use column::Column::*;
 use output::{Grid, Details};
 use term::dimensions;
+use xattr;
 
+use std::ascii::AsciiExt;
 use std::cmp::Ordering;
 use std::fmt;
 
@@ -43,6 +45,11 @@ impl Options {
     /// Call getopts on the given slice of command-line strings.
     pub fn getopts(args: &[String]) -> Result<(Options, Vec<String>), Misfire> {
         let mut opts = getopts::Options::new();
+        if xattr::feature_implemented() {
+            opts.optflag("@", "extended",
+                         "display extended attribute keys and sizes in long (-l) output"
+            );  
+        }
         opts.optflag("1", "oneline",   "display one entry per line");
         opts.optflag("a", "all",       "show dot-files");
         opts.optflag("b", "binary",    "use binary prefixes in file sizes");
@@ -117,9 +124,13 @@ impl FileFilter {
             SortField::Name => files.sort_by(|a, b| natord::compare(&*a.name, &*b.name)),
             SortField::Size => files.sort_by(|a, b| a.stat.size.cmp(&b.stat.size)),
             SortField::FileInode => files.sort_by(|a, b| a.stat.unstable.inode.cmp(&b.stat.unstable.inode)),
-            SortField::Extension => files.sort_by(|a, b| match a.ext.cmp(&b.ext) {
-                Ordering::Equal => natord::compare(&*a.name, &*b.name),
-                order => order
+            SortField::Extension => files.sort_by(|a, b| {
+                if a.ext.cmp(&b.ext) == Ordering::Equal {
+                    Ordering::Equal
+                }
+                else {
+                    a.name.to_ascii_lowercase().cmp(&b.name.to_ascii_lowercase())
+                }
             }),
             SortField::ModifiedDate => files.sort_by(|a, b| a.stat.modified.cmp(&b.stat.modified)),
             SortField::AccessedDate => files.sort_by(|a, b| a.stat.accessed.cmp(&b.stat.accessed)),
@@ -143,7 +154,7 @@ impl SortField {
 
     /// Find which field to use based on a user-supplied word.
     fn from_word(word: String) -> Result<SortField, Misfire> {
-        match &word[..] {
+        match word.as_slice() {
             "name" | "filename"  => Ok(SortField::Name),
             "size" | "filesize"  => Ok(SortField::Size),
             "ext"  | "extension" => Ok(SortField::Extension),
@@ -215,6 +226,7 @@ impl View {
                         columns: try!(Columns::deduce(matches)),
                         header: matches.opt_present("header"),
                         tree: matches.opt_present("recurse"),
+                        xattr: xattr::feature_implemented() && matches.opt_present("extended"),
                         filter: filter,
                 };
 
@@ -244,6 +256,9 @@ impl View {
         }
         else if matches.opt_present("tree") {
             Err(Misfire::Useless("tree", false, "long"))
+        }
+        else if xattr::feature_implemented() && matches.opt_present("extended") {
+            Err(Misfire::Useless("extended", false, "long"))
         }
         else if matches.opt_present("oneline") {
             if matches.opt_present("across") {
@@ -337,7 +352,7 @@ impl TimeTypes {
                 return Err(Misfire::Useless("accessed", true, "time"));
             }
 
-            match &word[..] {
+            match word.as_slice() {
                 "mod" | "modified"  => Ok(TimeTypes { accessed: false, modified: true, created: false }),
                 "acc" | "accessed"  => Ok(TimeTypes { accessed: true, modified: false, created: false }),
                 "cr"  | "created"   => Ok(TimeTypes { accessed: false, modified: false, created: true }),
@@ -461,6 +476,7 @@ mod test {
     use super::Options;
     use super::Misfire;
     use super::Misfire::*;
+    use xattr;
 
     fn is_helpful<T>(misfire: Result<T, Misfire>) -> bool {
         match misfire {
@@ -545,6 +561,14 @@ mod test {
     fn just_blocks() {
         let opts = Options::getopts(&[ "--blocks".to_string() ]);
         assert_eq!(opts.unwrap_err(), Misfire::Useless("blocks", false, "long"))
+    }
+
+    #[test]
+    fn extended_without_long() {
+        if xattr::feature_implemented() {
+            let opts = Options::getopts(&[ "--extended".to_string() ]);
+            assert_eq!(opts.unwrap_err(), Misfire::Useless("extended", false, "long"))
+        }
     }
 
     #[test]

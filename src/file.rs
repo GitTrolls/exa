@@ -1,7 +1,6 @@
 use std::old_io::{fs, IoResult};
 use std::old_io as io;
 use std::ascii::AsciiExt;
-use std::env::current_dir;
 
 use ansi_term::{ANSIString, ANSIStrings, Colour, Style};
 use ansi_term::Style::Plain;
@@ -22,6 +21,8 @@ use column::Column::*;
 use dir::Dir;
 use filetype::HasType;
 use options::{SizeFormat, TimeType};
+use xattr;
+use xattr::Attribute;
 
 /// This grey value is directly in between white and black, so it's guaranteed
 /// to show up on either backgrounded terminal.
@@ -40,6 +41,7 @@ pub struct File<'a> {
     pub ext:   Option<String>,
     pub path:  Path,
     pub stat:  io::FileStat,
+    pub xattrs: Vec<Attribute>,
     pub this:  Option<Dir>,
 }
 
@@ -81,20 +83,21 @@ impl<'a> File<'a> {
             path:  path.clone(),
             dir:   parent,
             stat:  stat,
+            xattrs: xattr::llist(path).unwrap_or(Vec::new()),
             name:  filename.to_string(),
-            ext:   ext(&filename),
+            ext:   ext(filename.as_slice()),
             this:  this,
         }
     }
 
     /// Whether this file is a dotfile or not.
     pub fn is_dotfile(&self) -> bool {
-        self.name.starts_with(".")
+        self.name.as_slice().starts_with(".")
     }
 
     /// Whether this file is a temporary file or not.
     pub fn is_tmpfile(&self) -> bool {
-        let name = &self.name;
+        let name = self.name.as_slice();
         name.ends_with("~") || (name.starts_with("#") && name.ends_with("#"))
     }
 
@@ -151,11 +154,11 @@ impl<'a> File<'a> {
                                    GREY.paint("=>"),
                                    Cyan.paint(target_path.dirname_str().unwrap()),
                                    Cyan.paint("/"),
-                                   file.file_colour().paint(&file.name)),
+                                   file.file_colour().paint(file.name.as_slice())),
                 Err(filename) => format!("{} {} {}",
                                          style.paint(name),
                                          Red.paint("=>"),
-                                         Red.underline().paint(&filename)),
+                                         Red.underline().paint(filename.as_slice())),
             }
         }
         else {
@@ -174,7 +177,7 @@ impl<'a> File<'a> {
     /// characters are 1 columns wide, but in some contexts, certain
     /// characters are actually 2 columns wide.
     pub fn file_name_width(&self) -> usize {
-        self.name.width(false)
+        self.name.as_slice().width(false)
     }
 
     /// Assuming the current file is a symlink, follows the link and
@@ -193,8 +196,9 @@ impl<'a> File<'a> {
                 path:  target_path.clone(),
                 dir:   self.dir,
                 stat:  stat,
+                xattrs: xattr::list(target_path).unwrap_or(Vec::new()),
                 name:  filename.to_string(),
-                ext:   ext(&filename),
+                ext:   ext(filename.as_slice()),
                 this:  None,
             })
         }
@@ -320,10 +324,10 @@ impl<'a> File<'a> {
                 DateFormat::parse("{2>:D} {:M} {2>:h}:{02>:m}").unwrap()
             }
             else {
-                DateFormat::parse("{2>:D} {:M} {5>:Y}").unwrap()
+                DateFormat::parse("{2>:D} {:M} {4>:Y}").unwrap()
             };
 
-        Cell::paint(Blue.normal(), &format.format(date, locale))
+        Cell::paint(Blue.normal(), format.format(date, locale).as_slice())
     }
 
     /// This file's type, represented by a coloured character.
@@ -339,6 +343,15 @@ impl<'a> File<'a> {
             io::FileType::Symlink       => Cyan.paint("l"),
             io::FileType::Unknown       => Plain.paint("?"),
         }
+    }
+
+    /// Marker indicating that the file contains extended attributes
+    ///
+    /// Returns “@” or  “ ” depending on wheter the file contains an extented 
+    /// attribute or not. Also returns “ ” in case the attributes cannot be read
+    /// for some reason.
+    fn attribute_marker(&self) -> ANSIString {
+        if self.xattrs.len() > 0 { Plain.paint("@") } else { Plain.paint(" ") }
     }
 
     /// Generate the "rwxrwxrwx" permissions string, like how ls does it.
@@ -364,6 +377,7 @@ impl<'a> File<'a> {
             File::permission_bit(&bits, io::OTHER_READ,    "r", Yellow.normal()),
             File::permission_bit(&bits, io::OTHER_WRITE,   "w", Red.normal()),
             File::permission_bit(&bits, io::OTHER_EXECUTE, "x", Green.normal()),
+            self.attribute_marker()
         ]).to_string();
 
         Cell { text: string, length: 10 }
@@ -389,7 +403,7 @@ impl<'a> File<'a> {
     /// valid without `foo.coffee`.
     pub fn get_source_files(&self) -> Vec<Path> {
         if let Some(ref ext) = self.ext {
-            match &ext[..] {
+            match ext.as_slice() {
                 "class" => vec![self.path.with_extension("java")],  // Java
                 "css"   => vec![self.path.with_extension("sass"),   self.path.with_extension("less")],  // SASS, Less
                 "elc"   => vec![self.path.with_extension("el")],    // Emacs Lisp
@@ -416,8 +430,7 @@ impl<'a> File<'a> {
 
     fn git_status(&self) -> Cell {
         let status = match self.dir {
-            Some(d) => d.git_status(&current_dir().unwrap_or(Path::new(".")).join(&self.path),
-                                    self.stat.kind == io::FileType::Directory),
+            Some(d) => d.git_status(&self.path, self.stat.kind == io::FileType::Directory),
             None    => GREY.paint("--").to_string(),
         };
 
