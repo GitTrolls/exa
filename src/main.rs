@@ -1,4 +1,4 @@
-#![feature(collections, core, env, io, libc, old_io, old_path, std_misc)]
+#![feature(collections, core, env, libc, old_io, old_path, plugin, std_misc)]
 
 // Other platforms than macos don't need std_misc but you can't
 // use #[cfg] on features.
@@ -33,7 +33,6 @@ pub mod output;
 pub mod term;
 pub mod xattr;
 
-#[cfg(not(test))]
 struct Exa<'a> {
     count:   usize,
     options: Options,
@@ -41,7 +40,6 @@ struct Exa<'a> {
     files:   Vec<File<'a>>,
 }
 
-#[cfg(not(test))]
 impl<'a> Exa<'a> {
     fn new(options: Options) -> Exa<'a> {
         Exa {
@@ -147,7 +145,6 @@ impl<'a> Exa<'a> {
     }
 }
 
-#[cfg(not(test))]
 fn main() {
     let args: Vec<String> = env::args().collect();
 

@@ -28,7 +28,6 @@ pub struct Options {
 
 #[derive(PartialEq, Debug, Copy)]
 pub struct FileFilter {
-    list_dirs_first: bool,
     reverse: bool,
     show_invisibles: bool,
     sort_field: SortField,
@@ -52,7 +51,6 @@ impl Options {
         opts.optflag("B", "bytes",     "list file sizes in bytes, without prefixes");
         opts.optflag("d", "list-dirs", "list directories as regular files");
         opts.optflag("g", "group",     "show group as well as user");
-        opts.optflag("",  "group-directories-first", "list directories before other files");
         opts.optflag("h", "header",    "show a header row at the top");
         opts.optflag("H", "links",     "show number of hard links");
         opts.optflag("i", "inode",     "show each file's inode number");
@@ -89,7 +87,6 @@ impl Options {
         };
 
         let filter = FileFilter {
-            list_dirs_first: matches.opt_present("group-directories-first"),
             reverse:         matches.opt_present("reverse"),
             show_invisibles: matches.opt_present("all"),
             sort_field:      sort_field,
@@ -141,11 +138,6 @@ impl FileFilter {
 
         if self.reverse {
             files.reverse();
-        }
-
-        if self.list_dirs_first {
-            // This relies on the fact that sort_by is stable.
-            files.sort_by(|a, b| b.is_directory().cmp(&a.is_directory()));
         }
     }
 }
@@ -241,8 +233,9 @@ impl View {
                 let details = Details {
                         columns: try!(Columns::deduce(matches)),
                         header: matches.opt_present("header"),
-                        recurse: dir_action.recurse_options().map(|o| (o, filter)),
+                        recurse: dir_action.recurse_options(),
                         xattr: xattr::feature_implemented() && matches.opt_present("extended"),
+                        filter: filter,
                 };
 
                 Ok(View::Details(details))
@@ -305,7 +298,7 @@ impl View {
     }
 }
 
-#[derive(PartialEq, Debug, Copy, Clone)]
+#[derive(PartialEq, Debug, Copy)]
 pub enum SizeFormat {
     DecimalBytes,
     BinaryBytes,
@@ -326,7 +319,7 @@ impl SizeFormat {
     }
 }
 
-#[derive(PartialEq, Debug, Copy, Clone)]
+#[derive(PartialEq, Debug, Copy)]
 pub enum TimeType {
     FileAccessed,
     FileModified,

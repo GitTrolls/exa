@@ -4,7 +4,7 @@ use ansi_term::Style;
 
 use options::{SizeFormat, TimeType};
 
-#[derive(PartialEq, Debug, Copy, Clone)]
+#[derive(PartialEq, Debug, Copy)]
 pub enum Column {
     Permissions,
     FileSize(SizeFormat),
