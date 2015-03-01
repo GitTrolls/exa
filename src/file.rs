@@ -1,7 +1,7 @@
 use std::old_io::{fs, IoResult};
 use std::old_io as io;
 use std::ascii::AsciiExt;
-use std::env::current_dir;
+use std::os::getcwd;
 
 use ansi_term::{ANSIString, ANSIStrings, Colour, Style};
 use ansi_term::Style::Plain;
@@ -89,6 +89,11 @@ impl<'a> File<'a> {
     pub fn is_tmpfile(&self) -> bool {
         let name = &self.name;
         name.ends_with("~") || (name.starts_with("#") && name.ends_with("#"))
+    }
+
+    /// Whether this file is a directory or not.
+    pub fn is_directory(&self) -> bool {
+        self.stat.kind == io::FileType::Directory
     }
 
     /// Get the data for a column, formatted as a coloured string.
@@ -300,7 +305,7 @@ impl<'a> File<'a> {
     /// any information from it, so by emitting "-" instead, the table is less
     /// cluttered with numbers.
     fn file_size(&self, size_format: SizeFormat, locale: &locale::Numeric) -> Cell {
-        if self.stat.kind == io::FileType::Directory {
+        if self.is_directory() {
             Cell { text: GREY.paint("-").to_string(), length: 1 }
         }
         else {
@@ -363,7 +368,7 @@ impl<'a> File<'a> {
 
     /// Marker indicating that the file contains extended attributes
     ///
-    /// Returns “@” or  “ ” depending on wheter the file contains an extented 
+    /// Returns “@” or  “ ” depending on wheter the file contains an extented
     /// attribute or not. Also returns “ ” in case the attributes cannot be read
     /// for some reason.
     fn attribute_marker(&self) -> ANSIString {
@@ -446,8 +451,8 @@ impl<'a> File<'a> {
 
     fn git_status(&self) -> Cell {
         let status = match self.dir {
-            Some(d) => d.git_status(&current_dir().unwrap_or(Path::new(".")).join(&self.path),
-                                    self.stat.kind == io::FileType::Directory),
+            Some(d) => d.git_status(&getcwd().unwrap_or(Path::new(".")).join(&self.path),
+                                    self.is_directory()),
             None    => GREY.paint("--").to_string(),
         };
 
