@@ -83,42 +83,45 @@ pub trait HasType {
 
 impl<'a> HasType for File<'a> {
     fn get_type(&self) -> FileType {
-
-        match self.stat.kind {
-            io::FileType::Directory    => return Directory,
-            io::FileType::Symlink      => return Symlink,
-            io::FileType::BlockSpecial => return Special,
-            io::FileType::NamedPipe    => return Special,
-            io::FileType::Unknown      => return Special,
-            _ => {}
+        let name = &self.name[..];
+        if self.stat.kind == io::FileType::Directory {
+            return Directory;
         }
-
-        if self.name.starts_with("README") || BUILD_TYPES.contains(&&self.name[..]) {
+        else if self.stat.kind == io::FileType::Symlink {
+            return Symlink;
+        }
+        else if self.stat.kind == io::FileType::BlockSpecial || self.stat.kind == io::FileType::NamedPipe || self.stat.kind == io::FileType::Unknown {
+            return Special;
+        }
+        else if self.stat.perm.contains(io::USER_EXECUTE) {
+            return Executable;
+        }
+        else if name.starts_with("README") || BUILD_TYPES.iter().any(|&s| s == name) {
             return Immediate;
         }
         else if let Some(ref ext) = self.ext {
-            if IMAGE_TYPES.contains(&&ext[..]) {
+            if IMAGE_TYPES.iter().any(|&s| s == *ext) {
                 return Image;
             }
-            else if VIDEO_TYPES.contains(&&ext[..]) {
+            else if VIDEO_TYPES.iter().any(|&s| s == *ext) {
                 return Video;
             }
-            else if MUSIC_TYPES.contains(&&ext[..]) {
+            else if MUSIC_TYPES.iter().any(|&s| s == *ext) {
                 return Music;
             }
-            else if MUSIC_LOSSLESS.contains(&&ext[..]) {
+            else if MUSIC_LOSSLESS.iter().any(|&s| s == *ext) {
                 return Lossless;
             }
-            else if CRYPTO_TYPES.contains(&&ext[..]) {
+            else if CRYPTO_TYPES.iter().any(|&s| s == *ext) {
                 return Crypto;
             }
-            else if DOCUMENT_TYPES.contains(&&ext[..]) {
+            else if DOCUMENT_TYPES.iter().any(|&s| s == *ext) {
                 return Document;
             }
-            else if COMPRESSED_TYPES.contains(&&ext[..]) {
+            else if COMPRESSED_TYPES.iter().any(|&s| s == *ext) {
                 return Compressed;
             }
-            else if self.is_tmpfile() || TEMP_TYPES.contains(&&ext[..]) {
+            else if self.is_tmpfile() || TEMP_TYPES.iter().any(|&s| s == *ext) {
                 return Temp;
             }
 
@@ -126,12 +129,10 @@ impl<'a> HasType for File<'a> {
             if source_files.is_empty() {
                 return Normal;
             }
-            else if let Some(dir) = self.dir {
-                if source_files.iter().any(|path| dir.contains(path)) {
-                    return Temp;
-                }
+            else if source_files.iter().any(|path| self.dir.map(|d| d.contains(path)).unwrap_or(false)) {
+                return Temp;
             }
-            else if COMPILED_TYPES.contains(&&ext[..]) {
+            else if COMPILED_TYPES.iter().any(|&s| s == *ext) {
                 return Compiled;
             }
         }
