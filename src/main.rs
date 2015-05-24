@@ -69,7 +69,7 @@ impl<'dir> Exa<'dir> {
         // Communication between consumer thread and producer threads
         enum StatResult<'dir> {
             File(File<'dir>),
-            Dir(PathBuf),
+            Path(PathBuf),
             Error
         }
 
@@ -86,7 +86,7 @@ impl<'dir> Exa<'dir> {
                 match results_rx.recv() {
                     Ok(result) => match result {
                         StatResult::File(file) => self.files.push(file),
-                        StatResult::Dir(path) => self.dirs.push(path),
+                        StatResult::Path(path) => self.dirs.push(path),
                         StatResult::Error      => ()
                     },
                     Err(_) => unreachable!(),
@@ -114,7 +114,7 @@ impl<'dir> Exa<'dir> {
                             StatResult::File(File::with_metadata(metadata, &path, None, true))
                         }
                         else {
-                            StatResult::Dir(path.to_path_buf())
+                            StatResult::Path(path.to_path_buf())
                         }
                     }
                     Err(e) => {

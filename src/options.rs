@@ -482,7 +482,7 @@ impl DirAction {
 
     pub fn is_tree(&self) -> bool {
         match *self {
-            DirAction::Recurse(RecurseOptions { tree, .. }) => tree,
+            DirAction::Recurse(RecurseOptions { max_depth: _, tree }) => tree,
             _ => false,
          }
     }
