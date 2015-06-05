@@ -1,5 +1,5 @@
 #![feature(collections, convert, core, exit_status, file_type, fs_ext, fs_mode)]
-#![feature(metadata_ext, raw_ext, symlink_metadata)]
+#![feature(metadata_ext, raw_ext, scoped, symlink_metadata)]
 
 extern crate ansi_term;
 extern crate datetime;
@@ -10,7 +10,6 @@ extern crate natord;
 extern crate num_cpus;
 extern crate number_prefix;
 extern crate pad;
-extern crate threadpool;
 extern crate users;
 extern crate unicode_width;
 
@@ -20,9 +19,8 @@ extern crate git2;
 use std::env;
 use std::fs;
 use std::path::{Component, Path, PathBuf};
-
-use threadpool::ThreadPool;
-use std::sync::mpsc::channel;
+use std::sync::mpsc::{channel, sync_channel};
+use std::thread;
 
 use dir::Dir;
 use file::File;
@@ -37,7 +35,6 @@ mod filetype;
 mod options;
 mod output;
 mod term;
-
 
 #[cfg(not(test))]
 struct Exa<'dir> {
@@ -59,13 +56,15 @@ impl<'dir> Exa<'dir> {
     }
 
     fn load(&mut self, files: &[String]) {
-
         // Separate the user-supplied paths into directories and files.
         // Files are shown first, and then each directory is expanded
         // and listed second.
+
         let is_tree = self.options.dir_action.is_tree() || self.options.dir_action.is_as_file();
         let total_files = files.len();
 
+        // Denotes the maxinum number of concurrent threads
+        let (thread_capacity_tx, thread_capacity_rs) = sync_channel(8 * num_cpus::get());
 
         // Communication between consumer thread and producer threads
         enum StatResult<'dir> {
@@ -74,17 +73,39 @@ impl<'dir> Exa<'dir> {
             Error
         }
 
-        let pool = ThreadPool::new(8 * num_cpus::get());
-        let (tx, rx) = channel();
+        let (results_tx, results_rx) = channel();
+
+        // Spawn consumer thread
+        let _consumer = thread::scoped(move || {
+            for _ in 0..total_files {
+
+                // Make room for more producer threads
+                let _ = thread_capacity_rs.recv();
+
+                // Receive a producer's result
+                match results_rx.recv() {
+                    Ok(result) => match result {
+                        StatResult::File(file) => self.files.push(file),
+                        StatResult::Dir(path) => self.dirs.push(path),
+                        StatResult::Error      => ()
+                    },
+                    Err(_) => unreachable!(),
+                }
+                self.count += 1;
+            }
+        });
 
         for file in files.iter() {
-            let tx = tx.clone();
             let file = file.clone();
+            let results_tx = results_tx.clone();
+
+            // Block until there is room for another thread
+            let _ = thread_capacity_tx.send(());
 
             // Spawn producer thread
-            pool.execute(move || {
+            thread::spawn(move || {
                 let path = Path::new(&*file);
-                let _ = tx.send(match fs::metadata(&path) {
+                let _ = results_tx.send(match fs::metadata(&path) {
                     Ok(metadata) => {
                         if !metadata.is_dir() {
                             StatResult::File(File::with_metadata(metadata, &path, None, false))
@@ -102,16 +123,6 @@ impl<'dir> Exa<'dir> {
                     }
                 });
             });
-        }
-
-        // Spawn consumer thread
-        for result in rx.iter().take(total_files) {
-            match result {
-                StatResult::File(file)  => self.files.push(file),
-                StatResult::Dir(path)   => self.dirs.push(path),
-                StatResult::Error       => ()
-            }
-            self.count += 1;
         }
     }
 
