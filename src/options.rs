@@ -107,12 +107,8 @@ impl Options {
         }, path_strs))
     }
 
-    pub fn sort_files(&self, files: &mut Vec<File>) {
-        self.filter.sort_files(files)
-    }
-
-    pub fn filter_files(&self, files: &mut Vec<File>) {
-        self.filter.filter_files(files)
+    pub fn transform_files(&self, files: &mut Vec<File>) {
+        self.filter.transform_files(files)
     }
 
     /// Whether the View specified in this set of options includes a Git
@@ -128,7 +124,7 @@ impl Options {
 }
 
 
-#[derive(Default, PartialEq, Debug, Copy, Clone)]
+#[derive(PartialEq, Debug, Copy, Clone)]
 pub struct FileFilter {
     list_dirs_first: bool,
     reverse: bool,
@@ -137,14 +133,26 @@ pub struct FileFilter {
 }
 
 impl FileFilter {
-    pub fn filter_files(&self, files: &mut Vec<File>) {
+    /// Transform the files (sorting, reversing, filtering) before listing them.
+    pub fn transform_files(&self, files: &mut Vec<File>) {
+
         if !self.show_invisibles {
             files.retain(|f| !f.is_dotfile());
         }
-    }
 
-    pub fn sort_files(&self, files: &mut Vec<File>) {
-        files.sort_by(|a, b| self.compare_files(a, b));
+        match self.sort_field {
+            SortField::Unsorted      => {},
+            SortField::Name          => files.sort_by(|a, b| natord::compare(&*a.name, &*b.name)),
+            SortField::Size          => files.sort_by(|a, b| a.metadata.len().cmp(&b.metadata.len())),
+            SortField::FileInode     => files.sort_by(|a, b| a.metadata.ino().cmp(&b.metadata.ino())),
+            SortField::ModifiedDate  => files.sort_by(|a, b| a.metadata.mtime().cmp(&b.metadata.mtime())),
+            SortField::AccessedDate  => files.sort_by(|a, b| a.metadata.atime().cmp(&b.metadata.atime())),
+            SortField::CreatedDate   => files.sort_by(|a, b| a.metadata.ctime().cmp(&b.metadata.ctime())),
+            SortField::Extension     => files.sort_by(|a, b| match a.ext.cmp(&b.ext) {
+                cmp::Ordering::Equal  => natord::compare(&*a.name, &*b.name),
+                order                 => order,
+            }),
+        }
 
         if self.reverse {
             files.reverse();
@@ -153,22 +161,6 @@ impl FileFilter {
         if self.list_dirs_first {
             // This relies on the fact that sort_by is stable.
             files.sort_by(|a, b| b.is_directory().cmp(&a.is_directory()));
-        }
-    }
-
-    pub fn compare_files(&self, a: &File, b: &File) -> cmp::Ordering {
-        match self.sort_field {
-            SortField::Unsorted      => cmp::Ordering::Equal,
-            SortField::Name          => natord::compare(&*a.name, &*b.name),
-            SortField::Size          => a.metadata.len().cmp(&b.metadata.len()),
-            SortField::FileInode     => a.metadata.ino().cmp(&b.metadata.ino()),
-            SortField::ModifiedDate  => a.metadata.mtime().cmp(&b.metadata.mtime()),
-            SortField::AccessedDate  => a.metadata.atime().cmp(&b.metadata.atime()),
-            SortField::CreatedDate   => a.metadata.ctime().cmp(&b.metadata.ctime()),
-            SortField::Extension     => match a.ext.cmp(&b.ext) {
-                cmp::Ordering::Equal  => natord::compare(&*a.name, &*b.name),
-                order                 => order,
-            },
         }
     }
 }
@@ -288,8 +280,7 @@ impl View {
                 let details = Details {
                     columns: Some(try!(Columns::deduce(matches))),
                     header: matches.opt_present("header"),
-                    recurse: dir_action.recurse_options(),
-                    filter: filter,
+                    recurse: dir_action.recurse_options().map(|o| (o, filter)),
                     xattr: xattr::ENABLED && matches.opt_present("extended"),
                     colours: if dimensions().is_some() { Colours::colourful() } else { Colours::plain() },
                 };
@@ -337,8 +328,7 @@ impl View {
                     let details = Details {
                         columns: None,
                         header: false,
-                        recurse: dir_action.recurse_options(),
-                        filter: filter,
+                        recurse: dir_action.recurse_options().map(|o| (o, filter)),
                         xattr: false,
                         colours: if dimensions().is_some() { Colours::colourful() } else { Colours::plain() },
                     };
@@ -416,7 +406,6 @@ impl SizeFormat {
     }
 }
 
-
 #[derive(PartialEq, Debug, Copy, Clone)]
 pub enum TimeType {
     FileAccessed,
@@ -433,7 +422,6 @@ impl TimeType {
         }
     }
 }
-
 
 #[derive(PartialEq, Debug, Copy, Clone)]
 pub struct TimeTypes {
@@ -491,7 +479,6 @@ impl TimeTypes {
     }
 }
 
-
 /// What to do when encountering a directory?
 #[derive(PartialEq, Debug, Copy, Clone)]
 pub enum DirAction {
@@ -523,15 +510,20 @@ impl DirAction {
         }
     }
 
-    pub fn treat_dirs_as_files(&self) -> bool {
+    pub fn is_as_file(&self) -> bool {
         match *self {
             DirAction::AsFile => true,
-            DirAction::Recurse(RecurseOptions { tree, .. }) => tree,
             _ => false,
         }
     }
-}
 
+    pub fn is_tree(&self) -> bool {
+        match *self {
+            DirAction::Recurse(RecurseOptions { tree, .. }) => tree,
+            _ => false,
+         }
+    }
+}
 
 #[derive(PartialEq, Debug, Copy, Clone)]
 pub struct RecurseOptions {
@@ -566,7 +558,6 @@ impl RecurseOptions {
         }
     }
 }
-
 
 #[derive(PartialEq, Copy, Clone, Debug, Default)]
 pub struct Columns {
