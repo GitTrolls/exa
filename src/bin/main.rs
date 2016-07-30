@@ -2,7 +2,7 @@ extern crate exa;
 use exa::Exa;
 
 use std::env::args;
-use std::io::{stdout, stderr, Write, ErrorKind};
+use std::io::stdout;
 use std::process::exit;
 
 fn main() {
@@ -10,17 +10,9 @@ fn main() {
     let mut stdout = stdout();
 
     match Exa::new(&args, &mut stdout) {
-        Ok(mut exa) => if let Err(e) = exa.run() {
-            match e.kind() {
-                ErrorKind::BrokenPipe => exit(0),
-                _ => {
-                    writeln!(stderr(), "{}", e).unwrap();
-                    exit(1);
-                },
-            };
-        },
+        Ok(mut exa) => exa.run().expect("IO error"),
         Err(e) => {
-            writeln!(stderr(), "{}", e).unwrap();
+            println!("{}", e);
             exit(e.error_code());
         },
     };
