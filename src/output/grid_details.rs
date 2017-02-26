@@ -122,7 +122,7 @@ impl GridDetails {
 
         if self.grid.across {
             for row in 0 .. height {
-                for column in &columns {
+                for column in columns.iter() {
                     if row < column.len() {
                         let cell = grid::Cell {
                             contents: ANSIStrings(&column[row].contents).to_string(),
@@ -135,7 +135,7 @@ impl GridDetails {
             }
         }
         else {
-            for column in &columns {
+            for column in columns.iter() {
                 for cell in column.iter() {
                     let cell = grid::Cell {
                         contents: ANSIStrings(&cell.contents).to_string(),
