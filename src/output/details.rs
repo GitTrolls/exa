@@ -140,6 +140,9 @@ pub struct Details {
     /// The colours to use to display information in the table, including the
     /// colour of the tree view symbols.
     pub colours: Colours,
+
+    /// Whether to show a file type indiccator.
+    pub classify: bool,
 }
 
 /// The **environment** struct contains any data that could change between
@@ -207,7 +210,7 @@ impl Details {
         // Build the table to put rows in.
         let mut table = Table {
             columns: &*columns_for_dir,
-            opts: &self,
+            opts: self,
             env: env,
             rows: Vec::new(),
         };
@@ -303,16 +306,16 @@ impl Details {
         for (index, egg) in file_eggs.into_iter().enumerate() {
             let mut files = Vec::new();
             let mut errors = egg.errors;
-            let mut width = DisplayWidth::from(&*egg.file.name);
+            let mut width = DisplayWidth::from_file(&egg.file, self.classify);
 
             if egg.file.dir.is_none() {
-                if let Some(ref parent) = egg.file.path.parent() {
+                if let Some(parent) = egg.file.path.parent() {
                     width = width + 1 + DisplayWidth::from(parent.to_string_lossy().as_ref());
                 }
             }
 
             let name = TextCell {
-                contents: filename(&egg.file, &self.colours, true),
+                contents: filename(&egg.file, &self.colours, true, self.classify),
                 width:    width,
             };
 
@@ -453,16 +456,16 @@ impl<'a, U: Users+Groups+'a> Table<'a, U> {
     }
 
     pub fn filename_cell(&self, file: File, links: bool) -> TextCell {
-        let mut width = DisplayWidth::from(&*file.name);
+        let mut width = DisplayWidth::from_file(&file, self.opts.classify);
 
         if file.dir.is_none() {
-            if let Some(ref parent) = file.path.parent() {
+            if let Some(parent) = file.path.parent() {
                 width = width + 1 + DisplayWidth::from(parent.to_string_lossy().as_ref());
             }
         }
 
         TextCell {
-            contents: filename(&file, &self.opts.colours, links),
+            contents: filename(&file, &self.opts.colours, links, self.opts.classify),
             width:    width,
         }
     }
@@ -481,7 +484,7 @@ impl<'a, U: Users+Groups+'a> Table<'a, U> {
     /// Use the list of columns to find which cells should be produced for
     /// this file, per-column.
     pub fn cells_for_file(&self, file: &File, xattrs: bool) -> Vec<TextCell> {
-        self.columns.clone().iter()
+        self.columns.iter()
                     .map(|c| self.display(file, c, xattrs))
                     .collect()
     }

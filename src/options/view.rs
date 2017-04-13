@@ -58,6 +58,7 @@ impl View {
                     filter: filter.clone(),
                     xattr: xattr::ENABLED && matches.opt_present("extended"),
                     colours: colours,
+                    classify: matches.opt_present("classify"),
                 };
 
                 Ok(details)
@@ -86,14 +87,16 @@ impl View {
         };
 
         let other_options_scan = || {
+            let classify = matches.opt_present("classify");
+
             let term_colours = TerminalColours::deduce(matches)?;
             let term_width   = TerminalWidth::deduce()?;
 
             if let Some(&width) = term_width.as_ref() {
                 let colours = match term_colours {
-                    TerminalColours::Always    => Colours::colourful(colour_scale()),
+                    TerminalColours::Always
+                    | TerminalColours::Automatic => Colours::colourful(colour_scale()),
                     TerminalColours::Never     => Colours::plain(),
-                    TerminalColours::Automatic => Colours::colourful(colour_scale()),
                 };
 
                 if matches.opt_present("oneline") {
@@ -103,6 +106,7 @@ impl View {
                     else {
                         let lines = Lines {
                              colours: colours,
+                             classify: classify,
                         };
 
                         Ok(View::Lines(lines))
@@ -116,6 +120,7 @@ impl View {
                         filter: filter.clone(),  // TODO: clone
                         xattr: false,
                         colours: colours,
+                        classify: classify,
                     };
 
                     Ok(View::Details(details))
@@ -125,6 +130,7 @@ impl View {
                         across: matches.opt_present("across"),
                         console_width: width,
                         colours: colours,
+                        classify: classify,
                     };
 
                     Ok(View::Grid(grid))
@@ -137,8 +143,7 @@ impl View {
 
                 let colours = match term_colours {
                     TerminalColours::Always    => Colours::colourful(colour_scale()),
-                    TerminalColours::Never     => Colours::plain(),
-                    TerminalColours::Automatic => Colours::plain(),
+                    TerminalColours::Never | TerminalColours::Automatic => Colours::plain(),
                 };
 
                 if matches.opt_present("tree") {
@@ -149,6 +154,7 @@ impl View {
                         filter: filter.clone(),
                         xattr: false,
                         colours: colours,
+                        classify: classify,
                     };
 
                     Ok(View::Details(details))
@@ -156,6 +162,7 @@ impl View {
                 else {
                     let lines = Lines {
                          colours: colours,
+                         classify: classify,
                     };
 
                     Ok(View::Lines(lines))
@@ -221,9 +228,9 @@ impl TerminalWidth {
 
     fn as_ref(&self) -> Option<&usize> {
         match *self {
-            TerminalWidth::Set(ref width)       => Some(width),
-            TerminalWidth::Terminal(ref width)  => Some(width),
-            TerminalWidth::Unset                => None,
+            TerminalWidth::Set(ref width)
+            | TerminalWidth::Terminal(ref width)    => Some(width),
+            TerminalWidth::Unset                    => None,
         }
     }
 }
@@ -345,7 +352,7 @@ impl TerminalColours {
 
     /// Determine which terminal colour conditions to use.
     fn deduce(matches: &getopts::Matches) -> Result<TerminalColours, Misfire> {
-        if let Some(word) = matches.opt_str("color").or(matches.opt_str("colour")) {
+        if let Some(word) = matches.opt_str("color").or_else(|| matches.opt_str("colour")) {
             match &*word {
                 "always"              => Ok(TerminalColours::Always),
                 "auto" | "automatic"  => Ok(TerminalColours::Automatic),

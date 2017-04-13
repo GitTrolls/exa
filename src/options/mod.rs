@@ -55,6 +55,7 @@ impl Options {
         opts.optflag("R", "recurse",      "recurse into directories");
         opts.optflag("T", "tree",         "recurse into subdirectories in a tree view");
         opts.optflag("x", "across",       "sort multi-column view entries across");
+        opts.optflag("F", "classify",     "show file type indicator (one of */=@|)");
         opts.optopt ("",  "color",        "when to show anything in colours", "WHEN");
         opts.optopt ("",  "colour",       "when to show anything in colours (alternate spelling)", "WHEN");
         opts.optflag("",  "color-scale",  "use a colour scale when displaying file sizes (alternate spelling)");
@@ -138,9 +139,9 @@ impl Options {
     /// Determines the complete set of options based on the given command-line
     /// arguments, after they’ve been parsed.
     fn deduce(matches: &getopts::Matches) -> Result<Options, Misfire> {
-        let dir_action = DirAction::deduce(&matches)?;
-        let filter = FileFilter::deduce(&matches)?;
-        let view = View::deduce(&matches, filter.clone(), dir_action)?;
+        let dir_action = DirAction::deduce(matches)?;
+        let filter = FileFilter::deduce(matches)?;
+        let view = View::deduce(matches, filter.clone(), dir_action)?;
 
         Ok(Options {
             dir_action: dir_action,
