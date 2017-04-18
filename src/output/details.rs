@@ -140,9 +140,6 @@ pub struct Details {
     /// The colours to use to display information in the table, including the
     /// colour of the tree view symbols.
     pub colours: Colours,
-
-    /// Whether to show a file type indiccator.
-    pub classify: bool,
 }
 
 /// The **environment** struct contains any data that could change between
@@ -306,7 +303,7 @@ impl Details {
         for (index, egg) in file_eggs.into_iter().enumerate() {
             let mut files = Vec::new();
             let mut errors = egg.errors;
-            let mut width = DisplayWidth::from_file(&egg.file, self.classify);
+            let mut width = DisplayWidth::from(&*egg.file.name);
 
             if egg.file.dir.is_none() {
                 if let Some(parent) = egg.file.path.parent() {
@@ -315,7 +312,7 @@ impl Details {
             }
 
             let name = TextCell {
-                contents: filename(&egg.file, &self.colours, true, self.classify),
+                contents: filename(&egg.file, &self.colours, true),
                 width:    width,
             };
 
@@ -456,7 +453,7 @@ impl<'a, U: Users+Groups+'a> Table<'a, U> {
     }
 
     pub fn filename_cell(&self, file: File, links: bool) -> TextCell {
-        let mut width = DisplayWidth::from_file(&file, self.opts.classify);
+        let mut width = DisplayWidth::from(&*file.name);
 
         if file.dir.is_none() {
             if let Some(parent) = file.path.parent() {
@@ -465,7 +462,7 @@ impl<'a, U: Users+Groups+'a> Table<'a, U> {
         }
 
         TextCell {
-            contents: filename(&file, &self.opts.colours, links, self.opts.classify),
+            contents: filename(&file, &self.opts.colours, links),
             width:    width,
         }
     }

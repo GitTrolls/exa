@@ -58,7 +58,6 @@ impl View {
                     filter: filter.clone(),
                     xattr: xattr::ENABLED && matches.opt_present("extended"),
                     colours: colours,
-                    classify: matches.opt_present("classify"),
                 };
 
                 Ok(details)
@@ -87,8 +86,6 @@ impl View {
         };
 
         let other_options_scan = || {
-            let classify = matches.opt_present("classify");
-
             let term_colours = TerminalColours::deduce(matches)?;
             let term_width   = TerminalWidth::deduce()?;
 
@@ -106,7 +103,6 @@ impl View {
                     else {
                         let lines = Lines {
                              colours: colours,
-                             classify: classify,
                         };
 
                         Ok(View::Lines(lines))
@@ -120,7 +116,6 @@ impl View {
                         filter: filter.clone(),  // TODO: clone
                         xattr: false,
                         colours: colours,
-                        classify: classify,
                     };
 
                     Ok(View::Details(details))
@@ -130,7 +125,6 @@ impl View {
                         across: matches.opt_present("across"),
                         console_width: width,
                         colours: colours,
-                        classify: classify,
                     };
 
                     Ok(View::Grid(grid))
@@ -154,7 +148,6 @@ impl View {
                         filter: filter.clone(),
                         xattr: false,
                         colours: colours,
-                        classify: classify,
                     };
 
                     Ok(View::Details(details))
@@ -162,7 +155,6 @@ impl View {
                 else {
                     let lines = Lines {
                          colours: colours,
-                         classify: classify,
                     };
 
                     Ok(View::Lines(lines))

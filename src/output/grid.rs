@@ -13,7 +13,6 @@ pub struct Grid {
     pub across: bool,
     pub console_width: usize,
     pub colours: Colours,
-    pub classify: bool,
 }
 
 impl Grid {
@@ -29,7 +28,7 @@ impl Grid {
         grid.reserve(files.len());
 
         for file in files.iter() {
-            let mut width = DisplayWidth::from_file(file, self.classify);
+            let mut width = DisplayWidth::from(&*file.name);
 
             if file.dir.is_none() {
                 if let Some(parent) = file.path.parent() {
@@ -38,7 +37,7 @@ impl Grid {
             }
 
             grid.add(grid::Cell {
-                contents:  filename(file, &self.colours, false, self.classify).strings().to_string(),
+                contents:  filename(file, &self.colours, false).strings().to_string(),
                 width:     *width,
             });
         }
@@ -49,7 +48,7 @@ impl Grid {
         else {
             // File names too long for a grid - drop down to just listing them!
             for file in files.iter() {
-                writeln!(w, "{}", filename(file, &self.colours, false, self.classify).strings())?;
+                writeln!(w, "{}", filename(file, &self.colours, false).strings())?;
             }
             Ok(())
         }
