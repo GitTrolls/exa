@@ -169,32 +169,28 @@ impl<'dir> File<'dir> {
             Err(e)    => return FileTarget::Err(e),
         };
 
-        let (metadata, ext) = {
-            let target_path_ = match self.dir {
-                Some(dir) if dir.path != Path::new(".") => Some(dir.join(&*path)),
-                _                                       => None
-            };
-            let target_path = target_path_.as_ref().unwrap_or(&path);
-            // Use plain `metadata` instead of `symlink_metadata` - we *want* to follow links.
-            (fs::metadata(&target_path), ext(&target_path))
+        let target_path = match self.dir {
+            Some(dir)  => dir.join(&*path),
+            None       => path
         };
 
-        let filename = match path.components().next_back() {
+        let filename = match target_path.components().next_back() {
             Some(comp) => comp.as_os_str().to_string_lossy().to_string(),
             None       => String::new(),
         };
 
-        if let Ok(metadata) = metadata {
+        // Use plain `metadata` instead of `symlink_metadata` - we *want* to follow links.
+        if let Ok(metadata) = fs::metadata(&target_path) {
             FileTarget::Ok(File {
-                path:      path,
+                path:      target_path.to_path_buf(),
                 dir:       self.dir,
                 metadata:  metadata,
-                ext:       ext,
+                ext:       ext(&target_path),
                 name:      filename,
             })
         }
         else {
-            FileTarget::Broken(path)
+            FileTarget::Broken(target_path)
         }
     }
 
