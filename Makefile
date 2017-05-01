@@ -22,4 +22,4 @@ $(INSTALL):
 
 install: build $(INSTALL)
 
-.PHONY: $(BUILD) build-no-git $(INSTALL)
+.PHONY: install
