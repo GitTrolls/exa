@@ -1,25 +1,53 @@
-PREFIX ?= /usr/local
+DESTDIR =
+PREFIX  = /usr/local
 
-BUILD = target/release/exa
+BASHDIR = /etc/bash_completion.d
+ZSHDIR  = /usr/share/zsh/vendor-completions
+FISHDIR = /usr/share/fish/completions
 
-$(BUILD):
-	@which rustc > /dev/null || { echo "exa requires Rust to compile. For installation instructions, please visit http://rust-lang.org/"; exit 1; }
-	cargo build --release
+FEATURES ?= default
 
-build: $(BUILD)
 
-build-no-git:
-	@which rustc > /dev/null || { echo "exa requires Rust to compile. For installation instructions, please visit http://rust-lang.org/"; exit 1; }
-	cargo build --release --no-default-features
+all: target/release/exa
+build: target/release/exa
 
-INSTALL = $(PREFIX)/bin/exa
+target/release/exa:
+	cargo build --release --features "${ENABLE_FEATURES}"
 
-$(INSTALL):
-	# BSD and OSX don't have -D to create leading directories
-	install -dm755 $(PREFIX)/bin/ $(PREFIX)/share/man/man1/
-	install -sm755 target/release/exa $(PREFIX)/bin/
-	install -m644 contrib/man/*.1 $(PREFIX)/share/man/man1/
+install: install-exa install-man
 
-install: build $(INSTALL)
+install-exa: target/release/exa
+	install -m755 -- target/release/exa "$(DESTDIR)$(PREFIX)/bin/"
 
-.PHONY: install
+install-man:
+	install -dm755 -- "$(DESTDIR)$(PREFIX)/bin/" "$(DESTDIR)$(PREFIX)/share/man/man1/"
+	install -m644  -- contrib/man/exa.1 "$(DESTDIR)$(PREFIX)/share/man/man1/"
+
+install-bash-completions:
+	install -m644 -- contrib/completions.bash "$(BASHDIR)/exa"
+
+install-zsh-completions:
+	install -m644 -- contrib/completions.zsh "$(ZSHDIR)/_exa"
+
+install-fish-completions:
+	install -m644 -- contrib/completions.fish "$(FISHDIR)/exa.fish"
+
+
+uninstall:
+	-rm -- "$(DESTDIR)$(PREFIX)/share/man/man1/exa.1"
+	-rm -- "$(DESTDIR)$(PREFIX)/bin/exa"
+	-rm -- "$(BASHDIR)/exa"
+	-rm -- "$(ZSHDIR)/_exa"
+	-rm -- "$(FISHDIR)/exa.fish"
+
+clean:
+	cargo clean
+
+
+preview-man:
+	nroff -man contrib/man/exa.1 | less
+
+
+.PHONY: all build install-exa install-man preview-man \
+	install-bash-completions install-zsh-completions install-fish-completions \
+	clean uninstall
