@@ -16,7 +16,6 @@ license = "MIT"
 [[bin]]
 name = "exa"
 path = "src/bin/main.rs"
-doc = false
 
 [lib]
 name = "exa"

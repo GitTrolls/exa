@@ -3,6 +3,7 @@
 
 extern crate ansi_term;
 extern crate datetime;
+extern crate getopts;
 extern crate glob;
 extern crate libc;
 extern crate locale;
@@ -21,16 +22,16 @@ extern crate zoneinfo_compiled;
 extern crate lazy_static;
 
 
-use std::ffi::{OsStr, OsString};
+use std::ffi::OsStr;
 use std::io::{stderr, Write, Result as IOResult};
 use std::path::{Component, PathBuf};
 
 use ansi_term::{ANSIStrings, Style};
 
 use fs::{Dir, File};
-use options::Options;
+use options::{Options, View, Mode};
 pub use options::Misfire;
-use output::{escape, lines, grid, grid_details, details, View, Mode};
+use output::{escape, lines, grid, grid_details, details};
 
 mod fs;
 mod info;
@@ -40,7 +41,7 @@ mod term;
 
 
 /// The main program wrapper.
-pub struct Exa<'args, 'w, W: Write + 'w> {
+pub struct Exa<'w, W: Write + 'w> {
 
     /// List of command-line options, having been successfully parsed.
     pub options: Options,
@@ -52,12 +53,12 @@ pub struct Exa<'args, 'w, W: Write + 'w> {
 
     /// List of the free command-line arguments that should correspond to file
     /// names (anything that isn’t an option).
-    pub args: Vec<&'args OsStr>,
+    pub args: Vec<String>,
 }
 
-impl<'args, 'w, W: Write + 'w> Exa<'args, 'w, W> {
-    pub fn new<I>(args: I, writer: &'w mut W) -> Result<Exa<'args, 'w, W>, Misfire>
-    where I: Iterator<Item=&'args OsString> {
+impl<'w, W: Write + 'w> Exa<'w, W> {
+    pub fn new<C>(args: C, writer: &'w mut W) -> Result<Exa<'w, W>, Misfire>
+    where C: IntoIterator, C::Item: AsRef<OsStr> {
         Options::getopts(args).map(move |(options, args)| {
             Exa { options, writer, args }
         })
@@ -70,20 +71,20 @@ impl<'args, 'w, W: Write + 'w> Exa<'args, 'w, W> {
 
         // List the current directory by default, like ls.
         if self.args.is_empty() {
-            self.args = vec![ OsStr::new(".") ];
+            self.args.push(".".to_owned());
         }
 
-        for file_path in &self.args {
-            match File::new(PathBuf::from(file_path), None, None) {
+        for file_name in &self.args {
+            match File::new(PathBuf::from(file_name), None, None) {
                 Err(e) => {
                     exit_status = 2;
-                    writeln!(stderr(), "{:?}: {}", file_path, e)?;
+                    writeln!(stderr(), "{}: {}", file_name, e)?;
                 },
                 Ok(f) => {
                     if f.is_directory() && !self.options.dir_action.treat_dirs_as_files() {
                         match f.to_dir(self.options.should_scan_for_git()) {
                             Ok(d) => dirs.push(d),
-                            Err(e) => writeln!(stderr(), "{:?}: {}", file_path, e)?,
+                            Err(e) => writeln!(stderr(), "{}: {}", file_name, e)?,
                         }
                     }
                     else {
