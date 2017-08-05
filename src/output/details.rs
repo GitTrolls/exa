@@ -65,9 +65,8 @@ use std::path::PathBuf;
 use std::vec::IntoIter as VecIntoIter;
 
 use fs::{Dir, File};
-use fs::dir_action::RecurseOptions;
-use fs::filter::FileFilter;
 use fs::feature::xattr::{Attribute, FileAttributes};
+use options::{FileFilter, RecurseOptions};
 use output::colours::Colours;
 use output::cell::TextCell;
 use output::tree::{TreeTrunk, TreeParams, TreeDepth};
