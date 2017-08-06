@@ -28,20 +28,21 @@ impl FileExtensions {
             "png", "jpeg", "jpg", "gif", "bmp", "tiff", "tif",
             "ppm", "pgm", "pbm", "pnm", "webp", "raw", "arw",
             "svg", "stl", "eps", "dvi", "ps", "cbr",
-            "cbz", "xpm", "ico", "cr2",
+            "cbz", "xpm", "ico", "cr2", "orf", "nef",
         ])
     }
 
     pub fn is_video(&self, file: &File) -> bool {
         file.extension_is_one_of( &[
             "avi", "flv", "m2v", "mkv", "mov", "mp4", "mpeg",
-            "mpg", "ogm", "ogv", "vob", "wmv",
+            "mpg", "ogm", "ogv", "vob", "wmv", "webm", "m2ts",
+            "ts",
         ])
     }
 
     pub fn is_music(&self, file: &File) -> bool {
         file.extension_is_one_of( &[
-            "aac", "m4a", "mp3", "ogg", "wma",
+            "aac", "m4a", "mp3", "ogg", "wma", "mka", "opus",
         ])
     }
 

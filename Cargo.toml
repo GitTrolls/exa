@@ -16,6 +16,7 @@ license = "MIT"
 [[bin]]
 name = "exa"
 path = "src/bin/main.rs"
+doc = false
 
 [lib]
 name = "exa"
@@ -36,6 +37,7 @@ scoped_threadpool = "0.1.*"
 term_grid = "0.1.2"
 unicode-width = "0.1.4"
 users = "0.5.2"
+term_size = "0.3.0"
 
 [features]
 default = [ "git" ]
