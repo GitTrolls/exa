@@ -35,14 +35,13 @@ impl FileExtensions {
     pub fn is_video(&self, file: &File) -> bool {
         file.extension_is_one_of( &[
             "avi", "flv", "m2v", "mkv", "mov", "mp4", "mpeg",
-            "mpg", "ogm", "ogv", "vob", "wmv", "webm", "m2ts",
-            "ts",
+            "mpg", "ogm", "ogv", "vob", "wmv",
         ])
     }
 
     pub fn is_music(&self, file: &File) -> bool {
         file.extension_is_one_of( &[
-            "aac", "m4a", "mp3", "ogg", "wma", "mka", "opus",
+            "aac", "m4a", "mp3", "ogg", "wma",
         ])
     }
 
