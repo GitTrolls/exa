@@ -1,3 +1,5 @@
+//! The grid-details view lists several details views side-by-side.
+
 use std::io::{Write, Result as IOResult};
 
 use ansi_term::ANSIStrings;
@@ -16,17 +18,54 @@ use output::table::{Table, Row as TableRow, Options as TableOptions};
 use output::tree::{TreeParams, TreeDepth};
 
 
+#[derive(Debug)]
+pub struct Options {
+    pub grid: GridOptions,
+    pub details: DetailsOptions,
+    pub row_threshold: Option<usize>,
+}
+
+
 pub struct Render<'a> {
+
+    /// The directory that’s being rendered here.
+    /// We need this to know which columns to put in the output.
     pub dir: Option<&'a Dir>,
+
+    /// The files that have been read from the directory. They should all
+    /// hold a reference to it.
     pub files: Vec<File<'a>>,
+
+    /// How to colour various pieces of text.
     pub colours: &'a Colours,
+
+    /// How to format filenames.
     pub style: &'a FileStyle,
+
+    /// The grid part of the grid-details view.
     pub grid: &'a GridOptions,
+
+    /// The details part of the grid-details view.
     pub details: &'a DetailsOptions,
+
+    /// How to filter files after listing a directory. The files in this
+    /// render will already have been filtered and sorted, but any directories
+    /// that we recurse into will have to have this applied.
     pub filter: &'a FileFilter,
+
+    /// The minimum number of rows that there need to be before grid-details
+    /// mode is activated.
+    pub row_threshold: Option<usize>,
 }
 
 impl<'a> Render<'a> {
+
+    /// Create a temporary Details render that gets used for the columns of
+    /// the grid-details render that's being generated.
+    ///
+    /// This includes an empty files vector because the files get added to
+    /// the table in *this* file, not in details: we only want to insert every
+    /// *n* files into each column’s table, not all of them.
     pub fn details(&self) -> DetailsRender<'a> {
         DetailsRender {
             dir: self.dir.clone(),
@@ -39,11 +78,33 @@ impl<'a> Render<'a> {
         }
     }
 
-    pub fn render<W: Write>(&self, w: &mut W) -> IOResult<()> {
+    /// Create a Details render for when this grid-details render doesn’t fit
+    /// in the terminal (or something has gone wrong) and we have given up.
+    pub fn give_up(self) -> DetailsRender<'a> {
+        DetailsRender {
+            dir: self.dir,
+            files: self.files,
+            colours: self.colours,
+            style: self.style,
+            opts: self.details,
+            recurse: None,
+            filter: &self.filter,
+        }
+    }
 
+    pub fn render<W: Write>(self, w: &mut W) -> IOResult<()> {
+        if let Some((grid, width)) = self.find_fitting_grid() {
+            write!(w, "{}", grid.fit_into_columns(width))
+        }
+        else {
+            self.give_up().render(w)
+        }
+    }
+
+    pub fn find_fitting_grid(&self) -> Option<(grid::Grid, grid::Width)> {
         let options = self.details.table.as_ref().expect("Details table options not given!");
 
-        let drender = self.clone().details();
+        let drender = self.details();
 
         let (first_table, _) = self.make_table(options, &drender);
 
@@ -57,7 +118,9 @@ impl<'a> Render<'a> {
 
         let mut last_working_table = self.make_grid(1, options, &file_names, rows.clone(), &drender);
 
-        for column_count in 2.. {
+        // If we can’t fit everything in a grid 100 columns wide, then
+        // something has gone seriously awry
+        for column_count in 2..100 {
             let grid = self.make_grid(column_count, options, &file_names, rows.clone(), &drender);
 
             let the_grid_fits = {
@@ -69,11 +132,20 @@ impl<'a> Render<'a> {
                 last_working_table = grid;
             }
             else {
-                return write!(w, "{}", last_working_table.fit_into_columns(column_count - 1));
+                // If we’ve figured out how many columns can fit in the user’s
+                // terminal, and it turns out there aren’t enough rows to
+                // make it worthwhile, then just resort to the lines view.
+                if let Some(thresh) = self.row_threshold {
+                    if last_working_table.fit_into_columns(column_count - 1).row_count() < thresh {
+                        return None;
+                    }
+                }
+
+                return Some((last_working_table, column_count - 1));
             }
         }
 
-        Ok(())
+        None
     }
 
     fn make_table<'t>(&'a self, options: &'a TableOptions, drender: &DetailsRender) -> (Table<'a>, Vec<DetailsRow>) {
