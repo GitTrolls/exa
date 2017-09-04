@@ -1,5 +1,4 @@
 use style::Colours;
-use output::file_name::{FileStyle, Classify};
 
 use options::{flags, Vars, Misfire};
 use options::parser::MatchedFlags;
@@ -60,30 +59,16 @@ impl TerminalColours {
 }
 
 
-pub struct Style {
-    pub colours: Colours,
-    pub style: FileStyle,
-}
-
-impl Style {
-
-    #[allow(trivial_casts)]   // the "as Box<_>" stuff below warns about this for some reason
-    pub fn deduce<V, TW>(matches: &MatchedFlags, vars: &V, widther: TW) -> Result<Self, Misfire>
+impl Colours {
+    pub fn deduce<V, TW>(matches: &MatchedFlags, vars: &V, widther: TW) -> Result<Colours, Misfire>
     where TW: Fn() -> Option<usize>, V: Vars {
         use self::TerminalColours::*;
-        use info::filetype::FileExtensions;
         use style::LSColors;
         use options::vars;
-        use output::file_name::NoFileColours;
-
-        let classify = Classify::deduce(matches)?;
 
         let tc = TerminalColours::deduce(matches)?;
         if tc == Never || (tc == Automatic && widther().is_none()) {
-            return Ok(Style {
-                colours: Colours::plain(),
-                style: FileStyle { classify, exts: Box::new(NoFileColours) },
-            });
+            return Ok(Colours::plain());
         }
 
         let scale = matches.has_where(|f| f.matches(&flags::COLOR_SCALE) || f.matches(&flags::COLOUR_SCALE))?;
@@ -91,37 +76,17 @@ impl Style {
 
         if let Some(lsc) = vars.get(vars::LS_COLORS) {
             let lsc = lsc.to_string_lossy();
-            LSColors(lsc.as_ref()).each_pair(|pair| {
-                colours.set_ls(&pair);
-            });
+            LSColors(lsc.as_ref()).each_pair(|pair| colours.set_ls(&pair));
         }
 
         if let Some(exa) = vars.get(vars::EXA_COLORS) {
             let exa = exa.to_string_lossy();
-            LSColors(exa.as_ref()).each_pair(|pair| {
-                colours.set_exa(&pair);
-            });
+            LSColors(exa.as_ref()).each_pair(|pair| colours.set_exa(&pair));
         }
 
-        let classify = Classify::deduce(matches)?;
-        let exts = if colours.colourful { Box::new(FileExtensions) as Box<_> }
-                                   else { Box::new(NoFileColours)  as Box<_> };
-
-        let style = FileStyle { classify, exts };
-        Ok(Style { colours, style })
+        Ok(colours)
     }
 }
-
-
-impl Classify {
-    fn deduce(matches: &MatchedFlags) -> Result<Classify, Misfire> {
-        let flagged = matches.has(&flags::CLASSIFY)?;
-
-        Ok(if flagged { Classify::AddFileIndicators }
-                 else { Classify::JustFilenames })
-    }
-}
-
 
 
 #[cfg(test)]
@@ -209,7 +174,7 @@ mod colour_test {
         ($name:ident:  $inputs:expr, $widther:expr;  $stricts:expr => $result:expr) => {
             #[test]
             fn $name() {
-                for result in parse_for_test($inputs.as_ref(), TEST_ARGS, $stricts, |mf| Style::deduce(mf, &None, &$widther).map(|s| s.colours)) {
+                for result in parse_for_test($inputs.as_ref(), TEST_ARGS, $stricts, |mf| Colours::deduce(mf, &None, &$widther)) {
                     assert_eq!(result, $result);
                 }
             }
@@ -218,7 +183,7 @@ mod colour_test {
         ($name:ident:  $inputs:expr, $widther:expr;  $stricts:expr => err $result:expr) => {
             #[test]
             fn $name() {
-                for result in parse_for_test($inputs.as_ref(), TEST_ARGS, $stricts, |mf| Style::deduce(mf, &None, &$widther).map(|s| s.colours)) {
+                for result in parse_for_test($inputs.as_ref(), TEST_ARGS, $stricts, |mf| Colours::deduce(mf, &None, &$widther)) {
                     assert_eq!(result.unwrap_err(), $result);
                 }
             }
@@ -227,7 +192,7 @@ mod colour_test {
         ($name:ident:  $inputs:expr, $widther:expr;  $stricts:expr => like $pat:pat) => {
             #[test]
             fn $name() {
-                for result in parse_for_test($inputs.as_ref(), TEST_ARGS, $stricts, |mf| Style::deduce(mf, &None, &$widther).map(|s| s.colours)) {
+                for result in parse_for_test($inputs.as_ref(), TEST_ARGS, $stricts, |mf| Colours::deduce(mf, &None, &$widther)) {
                     println!("Testing {:?}", result);
                     match result {
                         $pat => assert!(true),
@@ -280,7 +245,7 @@ mod customs_test {
 
                 let vars = MockVars { ls: $ls, exa: $exa };
 
-                for result in parse_for_test(&[], &[], Both, |mf| Style::deduce(mf, &vars, || Some(80)).map(|s| s.colours)) {
+                for result in parse_for_test(&[], &[], Both, |mf| Colours::deduce(mf, &vars, || Some(80))) {
                     assert_eq!(result.as_ref(), Ok(&c));
                 }
             }

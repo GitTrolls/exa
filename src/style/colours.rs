@@ -195,7 +195,7 @@ impl Colours {
 
 
 impl Colours {
-    pub fn set_ls(&mut self, pair: &Pair) -> bool {
+    pub fn set_ls(&mut self, pair: &Pair) {
         match pair.key {
             "di" => self.filekinds.directory    = pair.to_style(),
             "ex" => self.filekinds.executable   = pair.to_style(),
@@ -207,13 +207,23 @@ impl Colours {
             "ln" => self.filekinds.symlink      = pair.to_style(),
             "or" => self.broken_arrow           = pair.to_style(),
             "mi" => self.broken_filename        = pair.to_style(),
-             _   => return false,
+             _   => {/* don’t change anything */},
         }
-        true
     }
 
-    pub fn set_exa(&mut self, pair: &Pair) -> bool {
+    pub fn set_exa(&mut self, pair: &Pair) {
         match pair.key {
+            "di" => self.filekinds.directory      = pair.to_style(),
+            "ex" => self.filekinds.executable     = pair.to_style(),
+            "fi" => self.filekinds.normal         = pair.to_style(),
+            "pi" => self.filekinds.pipe           = pair.to_style(),
+            "so" => self.filekinds.socket         = pair.to_style(),
+            "bd" => self.filekinds.block_device   = pair.to_style(),
+            "cd" => self.filekinds.char_device    = pair.to_style(),
+            "ln" => self.filekinds.symlink        = pair.to_style(),
+            "or" => self.broken_arrow             = pair.to_style(),
+            "mi" => self.broken_filename          = pair.to_style(),
+
             "ur" => self.perms.user_read          = pair.to_style(),
             "uw" => self.perms.user_write         = pair.to_style(),
             "ux" => self.perms.user_execute_file  = pair.to_style(),
@@ -255,9 +265,8 @@ impl Colours {
             "lp" => self.symlink_path             = pair.to_style(),
             "cc" => self.control_char             = pair.to_style(),
 
-             _   => return false,
+             _   => {/* still don’t change anything */},
         }
-        true
     }
 }
 
