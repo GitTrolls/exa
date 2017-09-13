@@ -1,2 +1,0 @@
-Option --time (-t) has no "r" setting (choices: modified, accessed, created)
-To sort newest files first, try "--sort modified", or just "-stime"

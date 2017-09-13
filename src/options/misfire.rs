@@ -4,9 +4,19 @@ use std::num::ParseIntError;
 
 use glob;
 
-use options::{flags, HelpString, VersionString};
+use options::{HelpString, VersionString};
 use options::parser::{Arg, Flag, ParseError};
 
+
+/// A list of legal choices for an argument-taking option
+#[derive(PartialEq, Debug)]
+pub struct Choices(&'static [&'static str]);
+
+impl fmt::Display for Choices {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        write!(f, "(choices: {})", self.0.join(", "))
+    }
+}
 
 /// A **misfire** is a thing that can happen instead of listing files -- a
 /// catch-all for anything outside the program’s normal execution.
@@ -81,7 +91,7 @@ impl fmt::Display for Misfire {
         use self::Misfire::*;
 
         match *self {
-            BadArgument(ref a, ref b, ref c) => write!(f, "Option {} has no {:?} setting ({})", a, b, c),
+            BadArgument(ref a, ref b, ref c) => write!(f, "Option {} has no value {:?} (Choices: {})", a, b, c),
             InvalidOptions(ref e)            => write!(f, "{}", e),
             Help(ref text)                   => write!(f, "{}", text),
             Version(ref version)             => write!(f, "{}", version),
@@ -108,28 +118,5 @@ impl fmt::Display for ParseError {
             UnknownShortArgument { ref attempt } => write!(f, "Unknown argument -{}", *attempt as char),
             UnknownArgument { ref attempt }      => write!(f, "Unknown argument --{}", attempt.to_string_lossy()),
         }
-    }
-}
-
-impl Misfire {
-    pub fn suggestion(&self) -> Option<&'static str> {
-        if let Misfire::BadArgument(ref time, ref r, ref _choices) = *self {
-            if *time == &flags::TIME && r == "r" {
-                return Some("To sort newest files first, try \"--sort modified\", or just \"-stime\"");
-            }
-        }
-
-        None
-    }
-}
-
-
-/// A list of legal choices for an argument-taking option.
-#[derive(PartialEq, Debug)]
-pub struct Choices(&'static [&'static str]);
-
-impl fmt::Display for Choices {
-    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        write!(f, "choices: {}", self.0.join(", "))
     }
 }

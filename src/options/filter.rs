@@ -53,11 +53,8 @@ impl SortField {
         else if word == "Ext" || word == "Extension" {
             Ok(SortField::Extension(SortCase::ABCabc))
         }
-        else if word == "date" || word == "time" || word == "mod" || word == "modified" || word == "old" || word == "oldest" {
+        else if word == "mod" || word == "modified" {
             Ok(SortField::ModifiedDate)
-        }
-        else if word == "age" || word == "new" || word == "newest" {
-            Ok(SortField::ModifiedAge)
         }
         else if word == "acc" || word == "accessed" {
             Ok(SortField::AccessedDate)
@@ -219,11 +216,6 @@ mod test {
         test!(one_short:     SortField <- ["-saccessed"];      Both => Ok(SortField::AccessedDate));
         test!(lowercase:     SortField <- ["--sort", "name"];  Both => Ok(SortField::Name(SortCase::AaBbCc)));
         test!(uppercase:     SortField <- ["--sort", "Name"];  Both => Ok(SortField::Name(SortCase::ABCabc)));
-        test!(old:           SortField <- ["--sort", "old"];   Both => Ok(SortField::ModifiedDate));
-        test!(oldest:        SortField <- ["--sort=oldest"];   Both => Ok(SortField::ModifiedDate));
-        test!(new:           SortField <- ["--sort", "new"];   Both => Ok(SortField::ModifiedAge));
-        test!(newest:        SortField <- ["--sort=newest"];   Both => Ok(SortField::ModifiedAge));
-        test!(age:           SortField <- ["-sage"];           Both => Ok(SortField::ModifiedAge));
 
         // Errors
         test!(error:         SortField <- ["--sort=colour"];   Both => Err(Misfire::bad_argument(&flags::SORT, &os("colour"), super::SORTS)));
