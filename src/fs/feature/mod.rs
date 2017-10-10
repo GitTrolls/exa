@@ -1,5 +1,7 @@
+// Extended attribute support
 pub mod xattr;
-pub mod ignore;
+
+// Git support
 
 #[cfg(feature="git")] pub mod git;
 

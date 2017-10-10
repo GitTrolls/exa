@@ -4,7 +4,6 @@ use std::path::{Path, PathBuf};
 use std::slice::Iter as SliceIter;
 
 use fs::File;
-use fs::feature::ignore::IgnoreCache;
 
 
 /// A **Dir** provides a cached list of the file paths in a directory that's
@@ -44,15 +43,12 @@ impl Dir {
 
     /// Produce an iterator of IO results of trying to read all the files in
     /// this directory.
-    pub fn files<'dir, 'ig>(&'dir self, dots: DotFilter, ignore: Option<&'ig IgnoreCache>) -> Files<'dir, 'ig> {
-        if let Some(i) = ignore { i.discover_underneath(&self.path); }
-
+    pub fn files(&self, dots: DotFilter) -> Files {
         Files {
             inner:     self.contents.iter(),
             dir:       self,
             dotfiles:  dots.shows_dotfiles(),
             dots:      dots.dots(),
-            ignore:    ignore,
         }
     }
 
@@ -69,7 +65,7 @@ impl Dir {
 
 
 /// Iterator over reading the contents of a directory as `File` objects.
-pub struct Files<'dir, 'ig> {
+pub struct Files<'dir> {
 
     /// The internal iterator over the paths that have been read already.
     inner: SliceIter<'dir, PathBuf>,
@@ -83,11 +79,9 @@ pub struct Files<'dir, 'ig> {
     /// Whether the `.` or `..` directories should be produced first, before
     /// any files have been listed.
     dots: Dots,
-
-    ignore: Option<&'ig IgnoreCache>,
 }
 
-impl<'dir, 'ig> Files<'dir, 'ig> {
+impl<'dir> Files<'dir> {
     fn parent(&self) -> PathBuf {
         // We can’t use `Path#parent` here because all it does is remove the
         // last path component, which is no good for us if the path is
@@ -104,10 +98,6 @@ impl<'dir, 'ig> Files<'dir, 'ig> {
             if let Some(path) = self.inner.next() {
                 let filename = File::filename(path);
                 if !self.dotfiles && filename.starts_with(".") { continue }
-
-                if let Some(i) = self.ignore {
-                    if i.is_ignored(path) { continue }
-                }
 
                 return Some(File::new(path.clone(), self.dir, filename)
                                  .map_err(|e| (path.clone(), e)))
@@ -134,7 +124,7 @@ enum Dots {
 }
 
 
-impl<'dir, 'ig> Iterator for Files<'dir, 'ig> {
+impl<'dir> Iterator for Files<'dir> {
     type Item = Result<File<'dir>, (PathBuf, io::Error)>;
 
     fn next(&mut self) -> Option<Self::Item> {

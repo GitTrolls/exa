@@ -121,12 +121,6 @@ impl<'a, 'dir, C: Colours> FileName<'a, 'dir, C> {
         }
 
         if !self.file.name.is_empty() {
-        	// The “missing file” colour seems like it should be used here,
-        	// but it’s not! In a grid view, where there's no space to display
-        	// link targets, the filename has to have a different style to
-        	// indicate this fact. But when showing targets, we can just
-        	// colour the path instead (see below), and leave the broken
-        	// link’s filename as the link colour.
             for bit in self.coloured_file_name() {
                 bits.push(bit);
             }
@@ -161,9 +155,9 @@ impl<'a, 'dir, C: Colours> FileName<'a, 'dir, C> {
 
                 FileTarget::Broken(ref broken_path) => {
                     bits.push(Style::default().paint(" "));
-                    bits.push(self.colours.broken_symlink().paint("->"));
+                    bits.push(self.colours.broken_arrow().paint("->"));
                     bits.push(Style::default().paint(" "));
-                    escape(broken_path.display().to_string(), &mut bits, self.colours.broken_filename(), self.colours.broken_control_char());
+                    escape(broken_path.display().to_string(), &mut bits, self.colours.broken_filename(), self.colours.control_char().underline());
                 },
 
                 FileTarget::Err(_) => {
@@ -235,13 +229,15 @@ impl<'a, 'dir, C: Colours> FileName<'a, 'dir, C> {
 
     /// Figures out which colour to paint the filename part of the output,
     /// depending on which “type” of file it appears to be -- either from the
-    /// class on the filesystem or from its name. (Or the broken link colour,
-    /// if there’s nowhere else for that fact to be shown.)
+    /// class on the filesystem or from its name.
     pub fn style(&self) -> Style {
+        // Override the style with the “broken link” style when this file is
+        // a link that we can’t follow for whatever reason. This is used when
+        // there’s no other place to show that the link doesn’t work.
         if let LinkStyle::JustFilenames = self.link_style {
             if let Some(ref target) = self.target {
                 if target.is_broken() {
-                    return self.colours.broken_symlink();
+                    return self.colours.broken_arrow();
                 }
             }
         }
@@ -266,36 +262,14 @@ impl<'a, 'dir, C: Colours> FileName<'a, 'dir, C> {
     }
 }
 
-
-/// The set of colours that are needed to paint a file name.
 pub trait Colours: FiletypeColours {
-
-    /// The style to paint the path of a symlink’s target, up to but not
-    /// including the file’s name.
-    fn symlink_path(&self) -> Style;
-
-    /// The style to paint the arrow between a link and its target.
-    fn normal_arrow(&self) -> Style;
-
-	/// The style to paint the filenames of broken links in views that don’t
-	/// show link targets, and the style to paint the *arrow* between the link
-	/// and its target in views that *do* show link targets.
-    fn broken_symlink(&self) -> Style;
-
-    /// The style to paint the entire filename of a broken link.
+    fn broken_arrow(&self) -> Style;
     fn broken_filename(&self) -> Style;
-
-    /// The style to paint a non-displayable control character in a filename.
+    fn normal_arrow(&self) -> Style;
     fn control_char(&self) -> Style;
-
-    /// The style to paint a non-displayable control character in a filename,
-    /// when the filename is being displayed as a broken link target.
-    fn broken_control_char(&self) -> Style;
-
-    /// The style to paint a file that has its executable bit set.
+    fn symlink_path(&self) -> Style;
     fn executable_file(&self) -> Style;
 }
-
 
 // needs Debug because FileStyle derives it
 use std::fmt::Debug;

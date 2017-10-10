@@ -9,7 +9,7 @@
 
 ## Options
 
-exa’s options are almost, but not quite, entirely unlike `ls`'s.
+exa’s options are similar, but not exactly the same, as `ls`.
 
 ### Display Options
 
@@ -30,7 +30,6 @@ exa’s options are almost, but not quite, entirely unlike `ls`'s.
 - **-r**, **--reverse**: reverse the sort order
 - **-s**, **--sort=(field)**: which field to sort by
 - **--group-directories-first**: list directories before other files
-- **--git-ignore**: ignore files mentioned in `.gitignore`
 - **-I**, **--ignore-glob=(globs)**: glob patterns (pipe-separated) of files to ignore
 
 Pass the `--all` option twice to also show the `.` and `..` directories.
@@ -72,13 +71,13 @@ If you’re unable to compile libgit2, you can opt out of Git support by running
 
 If you’re using a recent version of Cargo (0.5.0 or higher), you can use the `cargo install` command:
 
-    cargo install exa
+    cargo install --git https://github.com/ogham/exa
 
 or:
 
-    cargo install --no-default-features exa
+    cargo install --no-default-features --git https://github.com/ogham/exa
 
-Cargo will build the `exa` binary and place it in `$HOME/.cargo` (this location can be overridden by setting the `--root` option).
+Cargo will clone the repository to a temporary directory, build it there and place the `exa` binary to: `$HOME/.cargo` (and can be overridden by setting the `--root` option).
 
 
 ## Testing with Vagrant

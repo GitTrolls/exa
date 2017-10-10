@@ -69,7 +69,6 @@ use ansi_term::Style;
 use fs::{Dir, File};
 use fs::dir_action::RecurseOptions;
 use fs::filter::FileFilter;
-use fs::feature::ignore::IgnoreCache;
 use fs::feature::git::GitCache;
 use fs::feature::xattr::{Attribute, FileAttributes};
 use style::Colours;
@@ -141,7 +140,7 @@ impl<'a> AsRef<File<'a>> for Egg<'a> {
 
 
 impl<'a> Render<'a> {
-    pub fn render<W: Write>(self, mut git: Option<&'a GitCache>, ignore: Option<&'a IgnoreCache>, w: &mut W) -> IOResult<()> {
+    pub fn render<W: Write>(self, mut git: Option<&'a GitCache>, w: &mut W) -> IOResult<()> {
         let mut rows = Vec::new();
 
         if let Some(ref table) = self.opts.table {
@@ -162,14 +161,14 @@ impl<'a> Render<'a> {
             // This is weird, but I can’t find a way around it:
             // https://internals.rust-lang.org/t/should-option-mut-t-implement-copy/3715/6
             let mut table = Some(table);
-            self.add_files_to_table(&mut table, &mut rows, &self.files, ignore, TreeDepth::root());
+            self.add_files_to_table(&mut table, &mut rows, &self.files, TreeDepth::root());
 
             for row in self.iterate_with_table(table.unwrap(), rows) {
                 writeln!(w, "{}", row.strings())?
             }
         }
         else {
-            self.add_files_to_table(&mut None, &mut rows, &self.files, ignore, TreeDepth::root());
+            self.add_files_to_table(&mut None, &mut rows, &self.files, TreeDepth::root());
 
             for row in self.iterate(rows) {
                 writeln!(w, "{}", row.strings())?
@@ -181,7 +180,7 @@ impl<'a> Render<'a> {
 
     /// Adds files to the table, possibly recursively. This is easily
     /// parallelisable, and uses a pool of threads.
-    fn add_files_to_table<'dir, 'ig>(&self, table: &mut Option<Table<'a>>, rows: &mut Vec<Row>, src: &Vec<File<'dir>>, ignore: Option<&'ig IgnoreCache>, depth: TreeDepth) {
+    fn add_files_to_table<'dir>(&self, table: &mut Option<Table<'a>>, rows: &mut Vec<Row>, src: &Vec<File<'dir>>, depth: TreeDepth) {
         use num_cpus;
         use scoped_threadpool::Pool;
         use std::sync::{Arc, Mutex};
@@ -283,7 +282,7 @@ impl<'a> Render<'a> {
             rows.push(row);
 
             if let Some(ref dir) = egg.dir {
-                for file_to_add in dir.files(self.filter.dot_filter, ignore) {
+                for file_to_add in dir.files(self.filter.dot_filter) {
                     match file_to_add {
                         Ok(f)          => files.push(f),
                         Err((path, e)) => errors.push((e, Some(path)))
@@ -301,7 +300,7 @@ impl<'a> Render<'a> {
                         rows.push(self.render_error(&error, TreeParams::new(depth.deeper(), false), path));
                     }
 
-                    self.add_files_to_table(table, rows, &files, ignore, depth.deeper());
+                    self.add_files_to_table(table, rows, &files, depth.deeper());
                     continue;
                 }
             }
@@ -327,16 +326,12 @@ impl<'a> Render<'a> {
     }
 
     fn render_error(&self, error: &IOError, tree: TreeParams, path: Option<PathBuf>) -> Row {
-        use output::file_name::Colours;
-
         let error_message = match path {
             Some(path) => format!("<{}: {}>", path.display(), error),
             None       => format!("<{}>", error),
         };
 
-		// TODO: broken_symlink() doesn’t quite seem like the right name for
-		// the style that’s being used here. Maybe split it in two?
-        let name = TextCell::paint(self.colours.broken_symlink(), error_message);
+        let name = TextCell::paint(self.colours.broken_arrow, error_message);
         Row { cells: None, name, tree }
     }
 

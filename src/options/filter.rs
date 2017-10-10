@@ -1,7 +1,7 @@
 //! Parsing the options for `FileFilter`.
 
 use fs::DotFilter;
-use fs::filter::{FileFilter, SortField, SortCase, IgnorePatterns, GitIgnore};
+use fs::filter::{FileFilter, SortField, SortCase, IgnorePatterns};
 
 use options::{flags, Misfire};
 use options::parser::MatchedFlags;
@@ -17,7 +17,6 @@ impl FileFilter {
             sort_field:      SortField::deduce(matches)?,
             dot_filter:      DotFilter::deduce(matches)?,
             ignore_patterns: IgnorePatterns::deduce(matches)?,
-            git_ignore:      GitIgnore::deduce(matches)?,
         })
     }
 }
@@ -181,14 +180,6 @@ impl IgnorePatterns {
 }
 
 
-impl GitIgnore {
-    pub fn deduce(matches: &MatchedFlags) -> Result<Self, Misfire> {
-        Ok(if matches.has(&flags::GIT_IGNORE)? { GitIgnore::CheckAndIgnore }
-                                          else { GitIgnore::Off })
-    }
-}
-
-
 
 #[cfg(test)]
 mod test {
@@ -205,7 +196,7 @@ mod test {
                 use options::test::parse_for_test;
                 use options::test::Strictnesses::*;
 
-                static TEST_ARGS: &[&Arg] = &[ &flags::SORT, &flags::ALL, &flags::TREE, &flags::IGNORE_GLOB, &flags::GIT_IGNORE ];
+                static TEST_ARGS: &[&Arg] = &[ &flags::SORT, &flags::ALL, &flags::TREE, &flags::IGNORE_GLOB ];
                 for result in parse_for_test($inputs.as_ref(), TEST_ARGS, $stricts, |mf| $type::deduce(mf)) {
                     assert_eq!(result, $result);
                 }
@@ -283,13 +274,5 @@ mod test {
         test!(overridden_2: IgnorePatterns <- ["-I", "*.OGG", "-I*.MP3"];      Last => Ok(IgnorePatterns::from_iter(vec![ pat("*.MP3") ])));
         test!(overridden_3: IgnorePatterns <- ["-I=*.ogg",    "-I", "*.mp3"];  Complain => Err(Misfire::Duplicate(Flag::Short(b'I'), Flag::Short(b'I'))));
         test!(overridden_4: IgnorePatterns <- ["-I", "*.OGG", "-I*.MP3"];      Complain => Err(Misfire::Duplicate(Flag::Short(b'I'), Flag::Short(b'I'))));
-    }
-
-
-    mod git_ignores {
-        use super::*;
-
-        test!(off:  GitIgnore <- [];                Both => Ok(GitIgnore::Off));
-        test!(on:   GitIgnore <- ["--git-ignore"];  Both => Ok(GitIgnore::CheckAndIgnore));
     }
 }
