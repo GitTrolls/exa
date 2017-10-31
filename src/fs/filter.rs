@@ -3,6 +3,7 @@
 use std::cmp::Ordering;
 use std::iter::FromIterator;
 use std::os::unix::fs::MetadataExt;
+use std::path::Path;
 
 use glob;
 use natord;
@@ -79,6 +80,12 @@ pub struct FileFilter {
     /// Glob patterns to ignore. Any file name that matches *any* of these
     /// patterns won’t be displayed in the list.
     pub ignore_patterns: IgnorePatterns,
+
+    /// Whether to ignore Git-ignored patterns.
+    /// This is implemented completely separately from the actual Git
+    /// repository scanning — a `.gitignore` file will still be scanned even
+    /// if there’s no `.git` folder present.
+    pub git_ignore: GitIgnore,
 }
 
 
@@ -149,7 +156,7 @@ pub enum SortField {
     /// display the timestamps, not compare them.
     ModifiedDate,
 
-    /// The time the was accessed (the “atime”).
+    /// The time the file was accessed (the “atime”).
     ///
     /// Oddly enough, this field rarely holds the *actual* accessed time.
     /// Recording a read time means writing to the file each time it’s read
@@ -302,7 +309,35 @@ impl IgnorePatterns {
     fn is_ignored(&self, file: &str) -> bool {
         self.patterns.iter().any(|p| p.matches(file))
     }
+
+    /// Test whether the given file should be hidden from the results.
+    pub fn is_ignored_path(&self, file: &Path) -> bool {
+        self.patterns.iter().any(|p| p.matches_path(file))
+    }
+
+    // TODO(ogham): The fact that `is_ignored_path` is pub while `is_ignored`
+    // isn’t probably means it’s in the wrong place
 }
+
+
+/// Whether to ignore or display files that are mentioned in `.gitignore` files.
+#[derive(PartialEq, Debug, Copy, Clone)]
+pub enum GitIgnore {
+
+    /// Ignore files that Git would ignore. This means doing a check for a
+    /// `.gitignore` file, possibly recursively up the filesystem tree.
+    CheckAndIgnore,
+
+    /// Display files, even if Git would ignore them.
+    Off,
+}
+
+// This is not fully baked yet. The `ignore` crate lists a lot more files that
+// we aren’t checking:
+//
+// > By default, all ignore files found are respected. This includes .ignore,
+// > .gitignore, .git/info/exclude and even your global gitignore globs,
+// > usually found in $XDG_CONFIG_HOME/git/ignore.
 
 
 
