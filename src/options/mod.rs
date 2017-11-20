@@ -194,19 +194,19 @@ pub mod test {
         use std::ffi::OsString;
 
         let bits = inputs.into_iter().map(|&o| os(o)).collect::<Vec<OsString>>();
-        let mut result = Vec::new();
+        let mut rezzies = Vec::new();
 
         if strictnesses == Last || strictnesses == Both {
             let results = Args(args).parse(bits.iter(), Strictness::UseLastArguments);
-            result.push(get(&results.unwrap().flags));
+            rezzies.push(get(&results.unwrap().flags));
         }
 
         if strictnesses == Complain || strictnesses == Both {
             let results = Args(args).parse(bits.iter(), Strictness::ComplainAboutRedundantArguments);
-            result.push(get(&results.unwrap().flags));
+            rezzies.push(get(&results.unwrap().flags));
         }
 
-        result
+        rezzies
     }
 
     /// Creates an `OSStr` (used in tests)
