@@ -221,8 +221,8 @@ impl<'args, 'w, W: Write + 'w> Exa<'args, 'w, W> {
             let View { ref mode, ref colours, ref style } = self.options.view;
 
             match *mode {
-                Mode::Lines(ref opts) => {
-                    let r = lines::Render { files, colours, style, opts };
+                Mode::Lines => {
+                    let r = lines::Render { files, colours, style };
                     r.render(self.writer)
                 }
 

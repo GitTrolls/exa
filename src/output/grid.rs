@@ -5,15 +5,12 @@ use term_grid as tg;
 use fs::File;
 use style::Colours;
 use output::file_name::FileStyle;
-use output::icons::painted_icon;
-use output::cell::DisplayWidth;
 
 
 #[derive(PartialEq, Debug, Copy, Clone)]
 pub struct Options {
     pub across: bool,
     pub console_width: usize,
-    pub icons: bool,
 }
 
 impl Options {
@@ -41,16 +38,11 @@ impl<'a> Render<'a> {
         grid.reserve(self.files.len());
 
         for file in self.files.iter() {
-            let icon = if self.opts.icons { Some(painted_icon(&file, &self.style)) } else { None };
             let filename = self.style.for_file(file, self.colours).paint();
-            let width = if self.opts.icons {
-                DisplayWidth::from(2) + filename.width() 
-            } else {
-                filename.width()
-            };
+            let width = filename.width();
 
             grid.add(tg::Cell {
-                contents:  format!("{icon}{filename}", icon=&icon.unwrap_or("".to_string()), filename=filename.strings().to_string()),
+                contents:  filename.strings().to_string(),
                 width:     *width,
             });
         }

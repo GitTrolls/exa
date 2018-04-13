@@ -8,7 +8,6 @@ pub mod details;
 pub mod file_name;
 pub mod grid_details;
 pub mod grid;
-pub mod icons;
 pub mod lines;
 pub mod render;
 pub mod table;
@@ -34,5 +33,5 @@ pub enum Mode {
     Grid(grid::Options),
     Details(details::Options),
     GridDetails(grid_details::Options),
-    Lines(lines::Options),
+    Lines,
 }
