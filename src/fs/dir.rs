@@ -35,9 +35,9 @@ impl Dir {
     pub fn read_dir(path: PathBuf) -> IOResult<Dir> {
         info!("Reading directory {:?}", &path);
 
-        let contents = fs::read_dir(&path)?
+        let contents: Vec<PathBuf> = try!(fs::read_dir(&path)?
                                              .map(|result| result.map(|entry| entry.path()))
-                                             .collect::<Result<_,_>>()?;
+                                             .collect());
 
         Ok(Dir { contents, path })
     }

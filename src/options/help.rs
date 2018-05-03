@@ -96,20 +96,20 @@ impl fmt::Display for HelpString {
     /// Format this help options into an actual string of help
     /// text to be displayed to the user.
     fn fmt(&self, f: &mut fmt::Formatter) -> Result<(), fmt::Error> {
-        write!(f, "Usage:\n  exa [options] [files...]\n")?;
+        try!(write!(f, "Usage:\n  exa [options] [files...]\n"));
 
         if !self.only_long {
-            write!(f, "{}", OPTIONS)?;
+            try!(write!(f, "{}", OPTIONS));
         }
 
-        write!(f, "{}", LONG_OPTIONS)?;
+        try!(write!(f, "{}", LONG_OPTIONS));
 
         if self.git {
-            write!(f, "\n{}", GIT_HELP)?;
+            try!(write!(f, "\n{}", GIT_HELP));
         }
 
         if self.xattrs {
-            write!(f, "\n{}", EXTENDED_HELP)?;
+            try!(write!(f, "\n{}", EXTENDED_HELP));
         }
 
         Ok(())
