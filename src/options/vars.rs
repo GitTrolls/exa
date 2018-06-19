@@ -12,8 +12,6 @@ pub static LS_COLORS: &str = "LS_COLORS";
 /// characters.
 pub static COLUMNS: &str = "COLUMNS";
 
-/// Environment variable used to datetime format.
-pub static TIME_STYLE: &str = "TIME_STYLE";
 
 // exa-specific variables
 
