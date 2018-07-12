@@ -83,7 +83,7 @@ impl Vars for LiveVars {
 /// listed before they’re actually listed, if the options demand it.
 fn git_options(options: &Options, args: &[&OsStr]) -> Option<GitCache> {
     if options.should_scan_for_git() {
-        Some(args.iter().map(PathBuf::from).collect())
+        Some(args.iter().map(|os| PathBuf::from(os)).collect())
     }
     else {
         None
@@ -166,7 +166,7 @@ impl<'args, 'w, W: Write + 'w> Exa<'args, 'w, W> {
                 first = false;
             }
             else {
-                writeln!(self.writer)?;
+                write!(self.writer, "\n")?;
             }
 
             if !is_only_dir {

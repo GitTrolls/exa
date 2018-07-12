@@ -88,8 +88,8 @@ pub struct DefaultFormat {
     pub date_and_year: DateFormat<'static>,
 }
 
-impl Default for DefaultFormat {
-    fn default() -> DefaultFormat {
+impl DefaultFormat {
+    pub fn new() -> DefaultFormat {
         use unicode_width::UnicodeWidthStr;
 
         let locale = locale::Time::load_user_locale()
@@ -120,9 +120,7 @@ impl Default for DefaultFormat {
 
         DefaultFormat { current_year, locale, date_and_time, date_and_year }
     }
-}
 
-impl DefaultFormat {
     fn is_recent(&self, date: LocalDateTime) -> bool {
         date.year() == self.current_year
     }
@@ -201,14 +199,12 @@ pub struct ISOFormat {
     pub current_year: i64,
 }
 
-impl Default for ISOFormat {
-    fn default() -> ISOFormat {
+impl ISOFormat {
+    pub fn new() -> Self {
         let current_year = LocalDateTime::now().year();
         ISOFormat { current_year }
     }
-}
 
-impl ISOFormat {
     fn is_recent(&self, date: LocalDateTime) -> bool {
         date.year() == self.current_year
     }

@@ -72,20 +72,23 @@ impl Mode {
                     Ok(Mode::Grid(grid))
                 }
             }
-            // If the terminal width couldn’t be matched for some reason, such
-            // as the program’s stdout being connected to a file, then
-            // fallback to the lines view.
-            else if matches.has(&flags::TREE)? {
-                let details = details::Options {
-                    table: None,
-                    header: false,
-                    xattr: xattr::ENABLED && matches.has(&flags::EXTENDED)?,
-                };
-
-                Ok(Mode::Details(details))
-            }
             else {
-                Ok(Mode::Lines)
+                // If the terminal width couldn’t be matched for some reason, such
+                // as the program’s stdout being connected to a file, then
+                // fallback to the lines view.
+
+                if matches.has(&flags::TREE)? {
+                    let details = details::Options {
+                        table: None,
+                        header: false,
+                        xattr: xattr::ENABLED && matches.has(&flags::EXTENDED)?,
+                    };
+
+                    Ok(Mode::Details(details))
+                }
+                else {
+                    Ok(Mode::Lines)
+                }
             }
         };
 
@@ -253,14 +256,14 @@ impl TimeFormat {
 
         let word = match matches.get(&flags::TIME_STYLE)? {
             Some(w) => w,
-            None    => return Ok(TimeFormat::DefaultFormat(DefaultFormat::default())),
+            None    => return Ok(TimeFormat::DefaultFormat(DefaultFormat::new())),
         };
 
         if word == "default" {
-            Ok(TimeFormat::DefaultFormat(DefaultFormat::default()))
+            Ok(TimeFormat::DefaultFormat(DefaultFormat::new()))
         }
         else if word == "iso" {
-            Ok(TimeFormat::ISOFormat(ISOFormat::default()))
+            Ok(TimeFormat::ISOFormat(ISOFormat::new()))
         }
         else if word == "long-iso" {
             Ok(TimeFormat::LongISO)

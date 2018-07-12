@@ -95,7 +95,13 @@ impl<'dir> File<'dir> {
     /// against a pre-compiled list of extensions which are known to only exist
     /// within ASCII, so it’s alright.
     fn ext(path: &Path) -> Option<String> {
-        let name = path.file_name().map(|f| f.to_string_lossy().to_string())?;
+        #[allow(unused)]
+        use std::ascii::AsciiExt;
+
+        let name = match path.file_name() {
+            Some(f) => f.to_string_lossy().to_string(),
+            None => return None,
+        };
 
         name.rfind('.').map(|p| name[p+1..].to_ascii_lowercase())
     }
@@ -203,7 +209,7 @@ impl<'dir> File<'dir> {
             Ok(metadata) => {
                 let ext  = File::ext(&path);
                 let name = File::filename(&path);
-                FileTarget::Ok(Box::new(File { parent_dir: None, path, ext, metadata, name }))
+                FileTarget::Ok(File { parent_dir: None, path, ext, metadata, name })
             }
             Err(e) => {
                 error!("Error following link {:?}: {:#?}", &path, e);
@@ -223,7 +229,7 @@ impl<'dir> File<'dir> {
         let count = self.metadata.nlink();
 
         f::Links {
-            count,
+            count: count,
             multiple: self.is_file() && count > 1,
         }
     }
@@ -388,7 +394,7 @@ impl<'a> AsRef<File<'a>> for File<'a> {
 pub enum FileTarget<'dir> {
 
     /// The symlink pointed at a file that exists.
-    Ok(Box<File<'dir>>),
+    Ok(File<'dir>),
 
     /// The symlink pointed at a file that does not exist. Holds the path
     /// where the file would be, if it existed.

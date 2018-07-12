@@ -41,6 +41,9 @@ pub struct FileFilter {
     /// ones, depending on the sort field.
     pub reverse: bool,
 
+    /// Whether to only show directories
+    pub only_dirs: bool,
+
     /// Which invisible “dot” files to include when listing a directory.
     ///
     /// Files starting with a single “.” are used to determine “system” or
@@ -94,6 +97,10 @@ impl FileFilter {
     /// filter predicate for files found inside a directory.
     pub fn filter_child_files(&self, files: &mut Vec<File>) {
         files.retain(|f| !self.ignore_patterns.is_ignored(&f.name));
+
+        if self.only_dirs {
+            files.retain(|f| f.is_directory());
+        }
     }
 
     /// Remove every file in the given vector that does *not* pass the
@@ -227,10 +234,10 @@ impl SortField {
     /// into groups between letters and numbers, and then sorts those blocks
     /// together, so `file10` will sort after `file9`, instead of before it
     /// because of the `1`.
-    pub fn compare_files(self, a: &File, b: &File) -> Ordering {
+    pub fn compare_files(&self, a: &File, b: &File) -> Ordering {
         use self::SortCase::{ABCabc, AaBbCc};
 
-        match self {
+        match *self {
             SortField::Unsorted  => Ordering::Equal,
 
             SortField::Name(ABCabc)  => natord::compare(&a.name, &b.name),
@@ -270,7 +277,7 @@ impl SortField {
     }
 
     fn strip_dot(n: &str) -> &str {
-        if n.starts_with('.') {
+        if n.starts_with(".") {
             &n[1..]
         } else {
             n
