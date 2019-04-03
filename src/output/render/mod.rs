@@ -23,7 +23,6 @@ mod size;
 pub use self::size::Colours as SizeColours;
 
 mod times;
-pub use self::times::Render as TimeRender;
 // times does too
 
 mod users;

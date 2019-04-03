@@ -12,7 +12,6 @@ use users::UsersCache;
 
 use style::Colours;
 use output::cell::TextCell;
-use output::render::TimeRender;
 use output::time::TimeFormat;
 use fs::{File, fields as f};
 use fs::feature::git::GitCache;
@@ -77,10 +76,6 @@ impl Columns {
 
         if self.time_types.modified {
             columns.push(Column::Timestamp(TimeType::Modified));
-        }
-
-        if self.time_types.changed {
-            columns.push(Column::Timestamp(TimeType::Changed));
         }
 
         if self.time_types.created {
@@ -180,16 +175,14 @@ impl Default for SizeFormat {
 /// across most (all?) operating systems.
 #[derive(PartialEq, Debug, Copy, Clone)]
 pub enum TimeType {
-    /// The file’s modified time (`st_mtime`).
-    Modified,
-
-    /// The file’s changed time (`st_ctime`)
-    Changed,
 
     /// The file’s accessed time (`st_atime`).
     Accessed,
 
-    /// The file’s creation time (`btime` or `birthtime`).
+    /// The file’s modified time (`st_mtime`).
+    Modified,
+
+    /// The file’s creation time (`st_ctime`).
     Created,
 }
 
@@ -198,9 +191,8 @@ impl TimeType {
     /// Returns the text to use for a column’s heading in the columns output.
     pub fn header(self) -> &'static str {
         match self {
-            TimeType::Modified  => "Date Modified",
-            TimeType::Changed   => "Date Changed",
             TimeType::Accessed  => "Date Accessed",
+            TimeType::Modified  => "Date Modified",
             TimeType::Created   => "Date Created",
         }
     }
@@ -214,9 +206,8 @@ impl TimeType {
 /// the time columns entirely (yet).
 #[derive(PartialEq, Debug, Copy, Clone)]
 pub struct TimeTypes {
-    pub modified: bool,
-    pub changed:  bool,
     pub accessed: bool,
+    pub modified: bool,
     pub created:  bool,
 }
 
@@ -225,7 +216,7 @@ impl Default for TimeTypes {
     /// By default, display just the ‘modified’ time. This is the most
     /// common option, which is why it has this shorthand.
     fn default() -> TimeTypes {
-        TimeTypes { modified: true, changed: false, accessed: false, created: false }
+        TimeTypes { accessed: false, modified: true, created: false }
     }
 }
 
@@ -351,7 +342,6 @@ impl<'a, 'f> Table<'a> {
             Column::GitStatus      => self.git_status(file).render(self.colours),
 
             Column::Timestamp(Modified)  => file.modified_time().render(self.colours.date, &self.env.tz, &self.time_format),
-            Column::Timestamp(Changed)   => file.changed_time() .render(self.colours.date, &self.env.tz, &self.time_format),
             Column::Timestamp(Created)   => file.created_time() .render(self.colours.date, &self.env.tz, &self.time_format),
             Column::Timestamp(Accessed)  => file.accessed_time().render(self.colours.date, &self.env.tz, &self.time_format),
         }

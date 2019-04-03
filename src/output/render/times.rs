@@ -1,18 +1,13 @@
 use datetime::TimeZone;
 use ansi_term::Style;
 
+use fs::fields as f;
 use output::cell::TextCell;
 use output::time::TimeFormat;
 
 
-pub trait Render {
-    fn render(self, style: Style,
-                        tz: &Option<TimeZone>,
-                        format: &TimeFormat) -> TextCell;
-}
-
-impl Render for std::time::Duration {
-    fn render(self, style: Style,
+impl f::Time {
+    pub fn render(self, style: Style,
                         tz: &Option<TimeZone>,
                         format: &TimeFormat) -> TextCell {
 

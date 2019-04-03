@@ -6,7 +6,6 @@ use output::time::TimeFormat;
 use options::{flags, Misfire, Vars};
 use options::parser::MatchedFlags;
 
-use fs::PlatformMetadata;
 use fs::feature::xattr;
 
 
@@ -297,58 +296,38 @@ impl TimeTypes {
     fn deduce(matches: &MatchedFlags) -> Result<TimeTypes, Misfire> {
         let possible_word = matches.get(&flags::TIME)?;
         let modified = matches.has(&flags::MODIFIED)?;
-        let changed  = matches.has(&flags::CHANGED)?;
-        let accessed = matches.has(&flags::ACCESSED)?;
         let created  = matches.has(&flags::CREATED)?;
+        let accessed = matches.has(&flags::ACCESSED)?;
 
-        let time_types = if let Some(word) = possible_word {
+        if let Some(word) = possible_word {
             if modified {
-                return Err(Misfire::Useless(&flags::MODIFIED, true, &flags::TIME));
-            }
-            else if changed {
-                return Err(Misfire::Useless(&flags::CHANGED, true, &flags::TIME));
-            }
-            else if accessed {
-                return Err(Misfire::Useless(&flags::ACCESSED, true, &flags::TIME));
+                Err(Misfire::Useless(&flags::MODIFIED, true, &flags::TIME))
             }
             else if created {
-                return Err(Misfire::Useless(&flags::CREATED, true, &flags::TIME));
+                Err(Misfire::Useless(&flags::CREATED, true, &flags::TIME))
+            }
+            else if accessed {
+                Err(Misfire::Useless(&flags::ACCESSED, true, &flags::TIME))
             }
             else if word == "mod" || word == "modified" {
-                TimeTypes { modified: true,  changed: false, accessed: false, created: false }
-            }
-            else if word == "ch" || word == "changed" {
-                TimeTypes { modified: false, changed: true,  accessed: false, created: false }
+                Ok(TimeTypes { accessed: false, modified: true,  created: false })
             }
             else if word == "acc" || word == "accessed" {
-                TimeTypes { modified: false, changed: false, accessed: true,  created: false }
+                Ok(TimeTypes { accessed: true,  modified: false, created: false })
             }
             else if word == "cr" || word == "created" {
-                TimeTypes { modified: false, changed: false, accessed: false, created: true  }
+                Ok(TimeTypes { accessed: false, modified: false, created: true  })
             }
             else {
-                return Err(Misfire::BadArgument(&flags::TIME, word.into()));
+                Err(Misfire::BadArgument(&flags::TIME, word.into()))
             }
         }
-        else if modified || changed || accessed || created {
-            TimeTypes { modified, changed, accessed, created }
+        else if modified || created || accessed {
+            Ok(TimeTypes { accessed, modified, created })
         }
         else {
-            TimeTypes::default()
-        };
-
-        let mut fields = vec![];
-        if time_types.modified { fields.push(PlatformMetadata::ModifiedTime); }
-        if time_types.changed  { fields.push(PlatformMetadata::ChangedTime); }
-        if time_types.accessed { fields.push(PlatformMetadata::AccessedTime); }
-        if time_types.created  { fields.push(PlatformMetadata::CreatedTime); }
-
-        for field in fields {
-            if let Err(misfire) = field.check_supported() {
-                return Err(misfire);
-            }
+            Ok(TimeTypes::default())
         }
-        Ok(time_types)
     }
 }
 
@@ -379,8 +358,7 @@ mod test {
     use options::test::Strictnesses::*;
 
     static TEST_ARGS: &[&Arg] = &[ &flags::BINARY, &flags::BYTES,    &flags::TIME_STYLE,
-                                   &flags::TIME,   &flags::MODIFIED, &flags::CHANGED,
-                                   &flags::CREATED, &flags::ACCESSED,
+                                   &flags::TIME,   &flags::MODIFIED, &flags::CREATED, &flags::ACCESSED,
                                    &flags::HEADER, &flags::GROUP,  &flags::INODE, &flags::GIT,
                                    &flags::LINKS,  &flags::BLOCKS, &flags::LONG,  &flags::LEVEL,
                                    &flags::GRID,   &flags::ACROSS, &flags::ONE_LINE ];
@@ -515,47 +493,32 @@ mod test {
         test!(empty:     TimeTypes <- [];                      Both => Ok(TimeTypes::default()));
 
         // Modified
-        test!(modified:  TimeTypes <- ["--modified"];          Both => Ok(TimeTypes { modified: true,  changed: false, accessed: false, created: false }));
-        test!(m:         TimeTypes <- ["-m"];                  Both => Ok(TimeTypes { modified: true,  changed: false, accessed: false, created: false }));
-        test!(time_mod:  TimeTypes <- ["--time=modified"];     Both => Ok(TimeTypes { modified: true,  changed: false, accessed: false, created: false }));
-        test!(time_m:    TimeTypes <- ["-tmod"];               Both => Ok(TimeTypes { modified: true,  changed: false, accessed: false, created: false }));
-
-        // Changed
-        #[cfg(target_family = "unix")]
-        test!(changed:   TimeTypes <- ["--changed"];           Both => Ok(TimeTypes { modified: false, changed: true,  accessed: false, created: false }));
-        #[cfg(target_family = "unix")]
-        test!(time_ch:   TimeTypes <- ["--time=changed"];      Both => Ok(TimeTypes { modified: false, changed: true,  accessed: false, created: false }));
-        #[cfg(target_family = "unix")]
-        test!(time_c:    TimeTypes <- ["-t", "ch"];            Both => Ok(TimeTypes { modified: false, changed: true,  accessed: false, created: false }));
+        test!(modified:  TimeTypes <- ["--modified"];          Both => Ok(TimeTypes { accessed: false,  modified: true,   created: false }));
+        test!(m:         TimeTypes <- ["-m"];                  Both => Ok(TimeTypes { accessed: false,  modified: true,   created: false }));
+        test!(time_mod:  TimeTypes <- ["--time=modified"];     Both => Ok(TimeTypes { accessed: false,  modified: true,   created: false }));
+        test!(time_m:    TimeTypes <- ["-tmod"];               Both => Ok(TimeTypes { accessed: false,  modified: true,   created: false }));
 
         // Accessed
-        test!(acc:       TimeTypes <- ["--accessed"];          Both => Ok(TimeTypes { modified: false, changed: false, accessed: true,  created: false }));
-        test!(a:         TimeTypes <- ["-u"];                  Both => Ok(TimeTypes { modified: false, changed: false, accessed: true,  created: false }));
-        test!(time_acc:  TimeTypes <- ["--time", "accessed"];  Both => Ok(TimeTypes { modified: false, changed: false, accessed: true,  created: false }));
-        test!(time_a:    TimeTypes <- ["-t", "acc"];           Both => Ok(TimeTypes { modified: false, changed: false, accessed: true,  created: false }));
+        test!(acc:       TimeTypes <- ["--accessed"];          Both => Ok(TimeTypes { accessed: true,   modified: false,  created: false }));
+        test!(a:         TimeTypes <- ["-u"];                  Both => Ok(TimeTypes { accessed: true,   modified: false,  created: false }));
+        test!(time_acc:  TimeTypes <- ["--time", "accessed"];  Both => Ok(TimeTypes { accessed: true,   modified: false,  created: false }));
+        test!(time_a:    TimeTypes <- ["-t", "acc"];           Both => Ok(TimeTypes { accessed: true,   modified: false,  created: false }));
 
         // Created
-        #[cfg(not(target_os = "linux"))]
-        test!(cr:        TimeTypes <- ["--created"];           Both => Ok(TimeTypes { modified: false, changed: false, accessed: false, created: true  }));
-        #[cfg(target_os = "linux")]
-        test!(cr:        TimeTypes <- ["--created"];           Both => err Misfire::Unsupported("creation time is not available on this platform currently".to_string()));
-        #[cfg(not(target_os = "linux"))]
-        test!(c:         TimeTypes <- ["-U"];                  Both => Ok(TimeTypes { modified: false, changed: false, accessed: false, created: true  }));
-        #[cfg(not(target_os = "linux"))]
-        test!(time_cr:   TimeTypes <- ["--time=created"];      Both => Ok(TimeTypes { modified: false, changed: false, accessed: false, created: true  }));
-        #[cfg(not(target_os = "linux"))]
-        test!(time_c:    TimeTypes <- ["-tcr"];                Both => Ok(TimeTypes { modified: false, changed: false, accessed: false, created: true  }));
+        test!(cr:        TimeTypes <- ["--created"];           Both => Ok(TimeTypes { accessed: false,  modified: false,  created: true  }));
+        test!(c:         TimeTypes <- ["-U"];                  Both => Ok(TimeTypes { accessed: false,  modified: false,  created: true  }));
+        test!(time_cr:   TimeTypes <- ["--time=created"];      Both => Ok(TimeTypes { accessed: false,  modified: false,  created: true  }));
+        test!(time_c:    TimeTypes <- ["-tcr"];                Both => Ok(TimeTypes { accessed: false,  modified: false,  created: true  }));
 
         // Multiples
-        test!(time_uu:   TimeTypes <- ["-u", "--modified"];    Both => Ok(TimeTypes { modified: true, changed: false, accessed: true,  created: false }));
-
+        test!(time_uu:   TimeTypes <- ["-uU"];                 Both => Ok(TimeTypes { accessed: true,   modified: false,  created: true  }));
 
         // Errors
         test!(time_tea:  TimeTypes <- ["--time=tea"];          Both => err Misfire::BadArgument(&flags::TIME, OsString::from("tea")));
         test!(time_ea:   TimeTypes <- ["-tea"];                Both => err Misfire::BadArgument(&flags::TIME, OsString::from("ea")));
 
         // Overriding
-        test!(overridden:   TimeTypes <- ["-tcr", "-tmod"];    Last => Ok(TimeTypes { modified: true,  changed: false, accessed: false, created: false }));
+        test!(overridden:   TimeTypes <- ["-tcr", "-tmod"];    Last => Ok(TimeTypes { accessed: false,  modified: true,   created: false }));
         test!(overridden_2: TimeTypes <- ["-tcr", "-tmod"];    Complain => err Misfire::Duplicate(Flag::Short(b't'), Flag::Short(b't')));
     }
 
