@@ -9,7 +9,8 @@ use output::table::SizeFormat;
 
 impl f::Size {
     pub fn render<C: Colours>(&self, colours: &C, size_format: SizeFormat, numerics: &NumericLocale) -> TextCell {
-        use number_prefix::{Prefixed, Standalone, NumberPrefix, PrefixNames};
+        use number_prefix::{binary_prefix, decimal_prefix};
+        use number_prefix::{Prefixed, Standalone, PrefixNames};
 
         let size = match *self {
             f::Size::Some(s)             => s,
@@ -18,8 +19,8 @@ impl f::Size {
         };
 
         let result = match size_format {
-            SizeFormat::DecimalBytes  => NumberPrefix::decimal(size as f64),
-            SizeFormat::BinaryBytes   => NumberPrefix::binary(size as f64),
+            SizeFormat::DecimalBytes  => decimal_prefix(size as f64),
+            SizeFormat::BinaryBytes   => binary_prefix(size as f64),
             SizeFormat::JustBytes     => {
                 let string = numerics.format_int(size);
                 return TextCell::paint(colours.size(size), string);
