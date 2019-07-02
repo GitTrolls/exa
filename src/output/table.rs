@@ -23,14 +23,14 @@ pub struct Options {
     pub env: Environment,
     pub size_format: SizeFormat,
     pub time_format: TimeFormat,
-    pub columns: Columns,
+    pub extra_columns: Columns,
 }
 
 // I had to make other types derive Debug,
 // and Mutex<UsersCache> is not that!
 impl fmt::Debug for Options {
     fn fmt(&self, f: &mut fmt::Formatter) -> Result<(), fmt::Error> {
-        write!(f, "Table({:#?})", self.columns)
+        write!(f, "Table({:#?})", self.extra_columns)
     }
 }
 
@@ -47,11 +47,6 @@ pub struct Columns {
     pub blocks: bool,
     pub group: bool,
     pub git: bool,
-
-    // Defaults to true:
-    pub permissions: bool,
-    pub filesize: bool,
-    pub user: bool,
 }
 
 impl Columns {
@@ -62,25 +57,19 @@ impl Columns {
             columns.push(Column::Inode);
         }
 
-        if self.permissions {
-            columns.push(Column::Permissions);
-        }
+        columns.push(Column::Permissions);
 
         if self.links {
             columns.push(Column::HardLinks);
         }
 
-        if self.filesize {
-            columns.push(Column::FileSize);
-        }
+        columns.push(Column::FileSize);
 
         if self.blocks {
             columns.push(Column::Blocks);
         }
 
-        if self.user {
-            columns.push(Column::User);
-        }
+        columns.push(Column::User);
 
         if self.group {
             columns.push(Column::Group);
@@ -305,7 +294,7 @@ pub struct Row {
 
 impl<'a, 'f> Table<'a> {
     pub fn new(options: &'a Options, git: Option<&'a GitCache>, colours: &'a Colours) -> Table<'a> {
-        let columns = options.columns.collect(git.is_some());
+        let columns = options.extra_columns.collect(git.is_some());
         let widths = TableWidths::zero(columns.len());
 
         Table {
