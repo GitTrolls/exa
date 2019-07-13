@@ -122,27 +122,9 @@ impl DefaultFormat {
     }
 }
 
-
 impl DefaultFormat {
     fn is_recent(&self, date: LocalDateTime) -> bool {
         date.year() == self.current_year
-    }
-
-    fn month_to_abbrev(month: datetime::Month) -> &'static str {
-        match month {
-            datetime::Month::January => "Jan",
-            datetime::Month::February => "Feb",
-            datetime::Month::March => "Mar",
-            datetime::Month::April => "Apr",
-            datetime::Month::May => "May",
-            datetime::Month::June => "Jun",
-            datetime::Month::July => "Jul",
-            datetime::Month::August => "August",
-            datetime::Month::September => "Sep",
-            datetime::Month::October => "Oct",
-            datetime::Month::November => "Nov",
-            datetime::Month::December => "Dec",
-        }
     }
 
     #[allow(trivial_numeric_casts)]
@@ -150,9 +132,7 @@ impl DefaultFormat {
         let date = LocalDateTime::at(time.seconds as i64);
 
         if self.is_recent(date) {
-            format!("{:2} {} {:02}:{:02}",
-            date.day(), DefaultFormat::month_to_abbrev(date.month()),
-            date.hour(), date.minute())
+            self.date_and_time.format(&date, &self.locale)
         }
         else {
             self.date_and_year.format(&date, &self.locale)
@@ -164,16 +144,13 @@ impl DefaultFormat {
         let date = zone.to_zoned(LocalDateTime::at(time.seconds as i64));
 
         if self.is_recent(date) {
-            format!("{:2} {} {:02}:{:02}",
-            date.day(), DefaultFormat::month_to_abbrev(date.month()),
-            date.hour(), date.minute())
+            self.date_and_time.format(&date, &self.locale)
         }
         else {
             self.date_and_year.format(&date, &self.locale)
         }
     }
 }
-
 
 
 #[allow(trivial_numeric_casts)]
