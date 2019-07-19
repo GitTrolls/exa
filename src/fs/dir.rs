@@ -3,10 +3,8 @@ use std::fs;
 use std::path::{Path, PathBuf};
 use std::slice::Iter as SliceIter;
 
-use log::info;
-
-use crate::fs::File;
-use crate::fs::feature::ignore::IgnoreCache;
+use fs::File;
+use fs::feature::ignore::IgnoreCache;
 
 
 /// A **Dir** provides a cached list of the file paths in a directory that's

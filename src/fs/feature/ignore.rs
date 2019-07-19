@@ -8,9 +8,7 @@ use std::io::Read;
 use std::path::{Path, PathBuf};
 use std::sync::RwLock;
 
-use log::debug;
-
-use crate::fs::filter::IgnorePatterns;
+use fs::filter::IgnorePatterns;
 
 
 /// An **ignore cache** holds sets of glob patterns paired with the

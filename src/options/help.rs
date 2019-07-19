@@ -1,8 +1,8 @@
 use std::fmt;
 
-use crate::options::flags;
-use crate::options::parser::MatchedFlags;
-use crate::fs::feature::xattr;
+use options::flags;
+use options::parser::MatchedFlags;
+use fs::feature::xattr;
 
 
 static OPTIONS: &str = r##"
@@ -122,7 +122,7 @@ impl fmt::Display for HelpString {
 
 #[cfg(test)]
 mod test {
-    use crate::options::Options;
+    use options::Options;
     use std::ffi::OsString;
 
     fn os(input: &'static str) -> OsString {

@@ -1,8 +1,8 @@
 use ansi_term::Style;
 use users::Users;
 
-use crate::fs::fields as f;
-use crate::output::cell::TextCell;
+use fs::fields as f;
+use output::cell::TextCell;
 
 
 
@@ -30,8 +30,8 @@ pub trait Colours {
 #[allow(unused_results)]
 pub mod test {
     use super::Colours;
-    use crate::fs::fields as f;
-    use crate::output::cell::TextCell;
+    use fs::fields as f;
+    use output::cell::TextCell;
 
     use users::User;
     use users::mock::MockUsers;

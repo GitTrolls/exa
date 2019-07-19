@@ -8,16 +8,14 @@ use zoneinfo_compiled::{CompiledData, Result as TZResult};
 
 use locale;
 
-use log::debug;
-
 use users::UsersCache;
 
-use crate::style::Colours;
-use crate::output::cell::TextCell;
-use crate::output::render::TimeRender;
-use crate::output::time::TimeFormat;
-use crate::fs::{File, fields as f};
-use crate::fs::feature::git::GitCache;
+use style::Colours;
+use output::cell::TextCell;
+use output::render::TimeRender;
+use output::time::TimeFormat;
+use fs::{File, fields as f};
+use fs::feature::git::GitCache;
 
 
 /// Options for displaying a table.
@@ -340,7 +338,7 @@ impl<'a, 'f> Table<'a> {
     }
 
     fn display(&self, file: &File, column: &Column, xattrs: bool) -> TextCell {
-        use crate::output::table::TimeType::*;
+        use output::table::TimeType::*;
 
         match *column {
             Column::Permissions    => self.permissions_plus(file, xattrs).render(self.colours),

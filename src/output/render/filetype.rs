@@ -1,6 +1,6 @@
 use ansi_term::{ANSIString, Style};
 
-use crate::fs::fields as f;
+use fs::fields as f;
 
 
 impl f::Type {

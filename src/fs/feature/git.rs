@@ -4,9 +4,8 @@ use std::path::{Path, PathBuf};
 use std::sync::Mutex;
 
 use git2;
-use log::{debug, error, info, warn};
 
-use crate::fs::fields as f;
+use fs::fields as f;
 
 
 /// A **Git cache** is assembled based on the user’s input arguments.

@@ -7,11 +7,9 @@ use std::os::unix::fs::{MetadataExt, PermissionsExt, FileTypeExt};
 use std::path::{Path, PathBuf};
 use std::time::{UNIX_EPOCH, Duration};
 
-use log::{debug, error};
-
-use crate::fs::dir::Dir;
-use crate::fs::fields as f;
-use crate::options::Misfire;
+use fs::dir::Dir;
+use fs::fields as f;
+use options::Misfire;
 
 
 /// A **File** is a wrapper around one of Rust's Path objects, along with

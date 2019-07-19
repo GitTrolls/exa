@@ -1,8 +1,8 @@
 use datetime::TimeZone;
 use ansi_term::Style;
 
-use crate::output::cell::TextCell;
-use crate::output::time::TimeFormat;
+use output::cell::TextCell;
+use output::time::TimeFormat;
 
 
 pub trait Render {

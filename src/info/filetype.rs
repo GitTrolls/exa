@@ -6,9 +6,9 @@
 
 use ansi_term::Style;
 
-use crate::fs::File;
-use crate::output::file_name::FileColours;
-use crate::output::icons::FileIcon;
+use fs::File;
+use output::file_name::FileColours;
+use output::icons::FileIcon;
 
 
 #[derive(Debug, Default, PartialEq)]
@@ -119,7 +119,7 @@ impl FileColours for FileExtensions {
 
 impl FileIcon for FileExtensions {
     fn icon_file(&self, file: &File) -> Option<char> {
-        use crate::output::icons::Icons;
+        use output::icons::Icons;
 
         Some(match file {
             f if self.is_music(f) || self.is_lossless(f) => Icons::Audio.value(),

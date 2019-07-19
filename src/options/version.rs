@@ -4,8 +4,8 @@
 
 use std::fmt;
 
-use crate::options::flags;
-use crate::options::parser::MatchedFlags;
+use options::flags;
+use options::parser::MatchedFlags;
 
 
 #[derive(PartialEq, Debug)]
@@ -38,7 +38,7 @@ impl fmt::Display for VersionString {
 
 #[cfg(test)]
 mod test {
-    use crate::options::Options;
+    use options::Options;
     use std::ffi::OsString;
 
     fn os(input: &'static str) -> OsString {

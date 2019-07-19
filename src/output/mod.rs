@@ -1,5 +1,5 @@
-use crate::output::file_name::FileStyle;
-use crate::style::Colours;
+use output::file_name::FileStyle;
+use style::Colours;
 
 pub use self::cell::{TextCell, TextCellContents, DisplayWidth};
 pub use self::escape::escape;
