@@ -265,11 +265,11 @@ impl Git {
 fn reorient(path: &Path) -> PathBuf {
     use std::env::current_dir;
     // I’m not 100% on this func tbh
-    let path = match current_dir() {
+    match current_dir() {
         Err(_)  => Path::new(".").join(&path),
         Ok(dir) => dir.join(&path),
-    };
-    path.canonicalize().unwrap_or(path)
+    }.canonicalize().unwrap()   // errors can be ignored here because they only occur if
+                                // the path does not exist / a component is not a folder
 }
 
 /// The character to display if the file has been modified, but not staged.
