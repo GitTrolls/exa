@@ -49,7 +49,6 @@ complete -c exa -s 's' -l 'sort'   -x -d "Which field to sort by" -a "
 "
 
 complete -c exa -s 'I' -l 'ignore-glob' -d "Ignore files that match these glob patterns" -r
-complete -c exa -s 'D' -l 'only-dirs'   -d "List only directories"
 
 # Long view options
 complete -c exa -s 'b' -l 'binary'   -d "List file sizes with binary prefixes"
@@ -77,5 +76,5 @@ complete -c exa        -l 'time-style' -x -d "How to format timestamps" -a "
 "
 
 # Optional extras
-complete -c exa -s 'g' -l 'git'      -d "List each file's Git status, if tracked"
+complete -c exa -l 'git' -d "List each file's Git status, if tracked"
 complete -c exa -s '@' -l 'extended' -d "List each file's extended attributes and sizes"
