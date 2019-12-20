@@ -4,7 +4,6 @@ use locale::Numeric as NumericLocale;
 use fs::fields as f;
 use output::cell::{TextCell, DisplayWidth};
 use output::table::SizeFormat;
-use number_prefix::Prefix;
 
 
 
@@ -22,19 +21,13 @@ impl f::Size {
             SizeFormat::DecimalBytes  => NumberPrefix::decimal(size as f64),
             SizeFormat::BinaryBytes   => NumberPrefix::binary(size as f64),
             SizeFormat::JustBytes     => {
-                // Use the binary prefix to select a style.
-                let prefix = match NumberPrefix::binary(size as f64) {
-                    Standalone(_) => None,
-                    Prefixed(p, _) => Some(p),
-                };
-                // But format the number directly using the locale.
                 let string = numerics.format_int(size);
-                return TextCell::paint(colours.size(prefix), string);
+                return TextCell::paint(colours.size(size), string);
             },
         };
 
         let (prefix, n) = match result {
-            Standalone(b)  => return TextCell::paint(colours.size(None), b.to_string()),
+            Standalone(b)  => return TextCell::paint(colours.size(b as u64), b.to_string()),
             Prefixed(p, n) => (p, n)
         };
 
@@ -49,8 +42,8 @@ impl f::Size {
         TextCell {
             width,
             contents: vec![
-                colours.size(Some(prefix)).paint(number),
-                colours.unit(Some(prefix)).paint(symbol),
+                colours.size(size).paint(number),
+                colours.unit().paint(symbol),
             ].into(),
         }
     }
@@ -73,9 +66,10 @@ impl f::DeviceIDs {
     }
 }
 
+
 pub trait Colours {
-    fn size(&self, prefix: Option<Prefix>) -> Style;
-    fn unit(&self, prefix: Option<Prefix>) -> Style;
+    fn size(&self, size: u64) -> Style;
+    fn unit(&self) -> Style;
     fn no_size(&self) -> Style;
 
     fn major(&self) -> Style;
@@ -94,14 +88,13 @@ pub mod test {
     use locale::Numeric as NumericLocale;
     use ansi_term::Colour::*;
     use ansi_term::Style;
-    use number_prefix::Prefix;
 
 
     struct TestColours;
 
     impl Colours for TestColours {
-        fn size(&self, _prefix: Option<Prefix>) -> Style { Fixed(66).normal() }
-        fn unit(&self, _prefix: Option<Prefix>) -> Style { Fixed(77).bold() }
+        fn size(&self, _size: u64) -> Style { Fixed(66).normal() }
+        fn unit(&self)             -> Style { Fixed(77).bold() }
         fn no_size(&self)          -> Style { Black.italic() }
 
         fn major(&self) -> Style { Blue.on(Red) }
