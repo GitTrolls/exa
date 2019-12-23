@@ -6,6 +6,7 @@ use output::time::TimeFormat;
 use options::{flags, Misfire, Vars};
 use options::parser::MatchedFlags;
 
+use fs::PlatformMetadata;
 use fs::feature::xattr;
 
 
@@ -209,8 +210,8 @@ impl TableOptions {
         let env = Environment::load_all();
         let time_format = TimeFormat::deduce(matches, vars)?;
         let size_format = SizeFormat::deduce(matches)?;
-        let extra_columns = Columns::deduce(matches)?;
-        Ok(TableOptions { env, time_format, size_format, extra_columns })
+        let columns = Columns::deduce(matches)?;
+        Ok(TableOptions { env, time_format, size_format, columns })
     }
 }
 
@@ -225,7 +226,11 @@ impl Columns {
         let inode  = matches.has(&flags::INODE)?;
         let links  = matches.has(&flags::LINKS)?;
 
-        Ok(Columns { time_types, git, blocks, group, inode, links })
+        let permissions = !matches.has(&flags::NO_PERMISSIONS)?;
+        let filesize =    !matches.has(&flags::NO_FILESIZE)?;
+        let user =        !matches.has(&flags::NO_USER)?;
+
+        Ok(Columns { time_types, git, blocks, group, inode, links, permissions, filesize, user })
     }
 }
 
@@ -307,7 +312,11 @@ impl TimeTypes {
         let accessed = matches.has(&flags::ACCESSED)?;
         let created  = matches.has(&flags::CREATED)?;
 
-        let time_types = if let Some(word) = possible_word {
+        let no_time = matches.has(&flags::NO_TIME)?;
+
+        let time_types = if no_time {
+            TimeTypes { modified: false, changed: false, accessed: false, created: false }
+        } else if let Some(word) = possible_word {
             if modified {
                 return Err(Misfire::Useless(&flags::MODIFIED, true, &flags::TIME));
             }
@@ -343,6 +352,17 @@ impl TimeTypes {
             TimeTypes::default()
         };
 
+        let mut fields = vec![];
+        if time_types.modified { fields.push(PlatformMetadata::ModifiedTime); }
+        if time_types.changed  { fields.push(PlatformMetadata::ChangedTime); }
+        if time_types.accessed { fields.push(PlatformMetadata::AccessedTime); }
+        if time_types.created  { fields.push(PlatformMetadata::CreatedTime); }
+
+        for field in fields {
+            if let Err(misfire) = field.check_supported() {
+                return Err(misfire);
+            }
+        }
         Ok(time_types)
     }
 }
@@ -530,9 +550,15 @@ mod test {
         test!(time_a:    TimeTypes <- ["-t", "acc"];           Both => Ok(TimeTypes { modified: false, changed: false, accessed: true,  created: false }));
 
         // Created
+        #[cfg(not(target_os = "linux"))]
         test!(cr:        TimeTypes <- ["--created"];           Both => Ok(TimeTypes { modified: false, changed: false, accessed: false, created: true  }));
+        #[cfg(target_os = "linux")]
+        test!(cr:        TimeTypes <- ["--created"];           Both => err Misfire::Unsupported("creation time is not available on this platform currently".to_string()));
+        #[cfg(not(target_os = "linux"))]
         test!(c:         TimeTypes <- ["-U"];                  Both => Ok(TimeTypes { modified: false, changed: false, accessed: false, created: true  }));
+        #[cfg(not(target_os = "linux"))]
         test!(time_cr:   TimeTypes <- ["--time=created"];      Both => Ok(TimeTypes { modified: false, changed: false, accessed: false, created: true  }));
+        #[cfg(not(target_os = "linux"))]
         test!(t_cr:      TimeTypes <- ["-tcr"];                Both => Ok(TimeTypes { modified: false, changed: false, accessed: false, created: true  }));
 
         // Multiples
