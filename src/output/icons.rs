@@ -1,7 +1,8 @@
 use ansi_term::Style;
-use fs::File;
-use info::filetype::FileExtensions;
-use output::file_name::FileStyle;
+
+use crate::fs::File;
+use crate::info::filetype::FileExtensions;
+use crate::output::file_name::FileStyle;
 
 pub trait FileIcon {
     fn icon_file(&self, file: &File) -> Option<char>;
@@ -38,7 +39,7 @@ pub fn painted_icon(file: &File, style: &FileStyle) -> String {
                     c.paint(file_icon).to_string() 
                 }
             });
-    format!("{}  ", painted)
+    format!("{} ", painted)
 }
 
 fn icon(file: &File) -> char {
