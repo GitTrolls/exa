@@ -162,7 +162,7 @@ On openSUSE, install the [`exa`](https://software.opensuse.org/package/exa) pack
 
 On Ubuntu 20.10 (Groovy Gorilla) and later, install the [`exa`](https://packages.ubuntu.com/groovy/exa) package.
 
-    $ sudo apt install exa
+    $ apt install exa
 
 ### Void Linux
 
