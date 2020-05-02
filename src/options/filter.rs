@@ -58,9 +58,12 @@ impl SortField {
             // newest files) get sorted at the top, and files with the most
             // age (the oldest) at the bottom.
             "age" | "old" | "oldest" => SortField::ModifiedAge,
+            #[cfg(unix)]
             "ch" | "changed" => SortField::ChangedDate,
             "acc" | "accessed" => SortField::AccessedDate,
+            #[cfg(unix)]
             "cr" | "created" => SortField::CreatedDate,
+            #[cfg(unix)]
             "inode" => SortField::FileInode,
             "type" => SortField::FileType,
             "none" => SortField::Unsorted,
@@ -144,7 +147,7 @@ impl DotFilter {
 impl IgnorePatterns {
 
     /// Determines the set of glob patterns to use based on the
-    /// `--ignore-glob` argument’s value. This is a list of strings
+    /// `--ignore-patterns` argument’s value. This is a list of strings
     /// separated by pipe (`|`) characters, given in any order.
     pub fn deduce(matches: &MatchedFlags) -> Result<IgnorePatterns, Misfire> {
 
