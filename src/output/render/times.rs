@@ -11,21 +11,18 @@ pub trait Render {
                         format: &TimeFormat) -> TextCell;
 }
 
-impl Render for Option<std::time::SystemTime> {
+impl Render for std::time::Duration {
     fn render(self, style: Style,
                         tz: &Option<TimeZone>,
                         format: &TimeFormat) -> TextCell {
 
-        let datestamp = if let Some(time) = self {
-            if let Some(ref tz) = tz {
-                format.format_zoned(time, tz)
-            } else {
-                format.format_local(time)
-            }
-        } else {
-            String::from("-")
-        };
-
-        TextCell::paint(style, datestamp)
+        if let Some(ref tz) = *tz {
+            let datestamp = format.format_zoned(self, tz);
+            TextCell::paint(style, datestamp)
+        }
+        else {
+            let datestamp = format.format_local(self);
+            TextCell::paint(style, datestamp)
+        }
     }
 }
