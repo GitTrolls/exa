@@ -2,7 +2,6 @@
 #![allow(trivial_casts)]  // for ARM
 extern crate libc;
 
-use std::cmp::Ordering;
 use std::io;
 use std::path::Path;
 
@@ -59,44 +58,44 @@ pub fn list_attrs(lister: &lister::Lister, path: &Path) -> io::Result<Vec<Attrib
         None => return Err(io::Error::new(io::ErrorKind::Other, "Error: path somehow contained a NUL?")),
     };
 
-    let bufsize = lister.listxattr_first(&c_path);
-    match bufsize.cmp(&0) {
-        Ordering::Less => return Err(io::Error::last_os_error()),
-        Ordering::Equal => return Ok(Vec::new()),
-        Ordering::Greater => {},
-    }
-
-    let mut buf = vec![0u8; bufsize as usize];
-    let err = lister.listxattr_second(&c_path, &mut buf, bufsize);
-
-    match err.cmp(&0) {
-        Ordering::Less => return Err(io::Error::last_os_error()),
-        Ordering::Equal => return Ok(Vec::new()),
-        Ordering::Greater => {},
-    }
-
     let mut names = Vec::new();
-    if err > 0 {
-        // End indices of the attribute names
-        // the buffer contains 0-terminated c-strings
-        let idx = buf.iter().enumerate().filter_map(|(i, v)|
-            if *v == 0 { Some(i) } else { None }
-        );
-        let mut start = 0;
+    let bufsize = lister.listxattr_first(&c_path);
 
-        for end in idx {
-            let c_end = end + 1; // end of the c-string (including 0)
-            let size = lister.getxattr(&c_path, &buf[start..c_end]);
+    if bufsize < 0 {
+        return Err(io::Error::last_os_error());
+    }
+    else if bufsize > 0 {
+        let mut buf = vec![0u8; bufsize as usize];
+        let err = lister.listxattr_second(&c_path, &mut buf, bufsize);
 
-            if size > 0 {
-                names.push(Attribute {
-                    name: lister.translate_attribute_name(&buf[start..end]),
-                    size: size as usize
-                });
+        if err < 0 {
+            return Err(io::Error::last_os_error());
+        }
+
+        if err > 0 {
+            // End indicies of the attribute names
+            // the buffer contains 0-terminates c-strings
+            let idx = buf.iter().enumerate().filter_map(|(i, v)|
+                if *v == 0 { Some(i) } else { None }
+            );
+            let mut start = 0;
+
+            for end in idx {
+                let c_end = end + 1; // end of the c-string (including 0)
+                let size = lister.getxattr(&c_path, &buf[start..c_end]);
+
+                if size > 0 {
+                    names.push(Attribute {
+                        name: lister.translate_attribute_name(&buf[start..end]),
+                        size: size as usize
+                    });
+                }
+
+                start = c_end;
             }
 
-            start = c_end;
         }
+
     }
     Ok(names)
 }

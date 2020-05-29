@@ -5,6 +5,9 @@ use std::iter::FromIterator;
 use std::os::unix::fs::MetadataExt;
 use std::path::Path;
 
+use glob;
+use natord;
+
 use crate::fs::File;
 use crate::fs::DotFilter;
 

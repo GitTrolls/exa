@@ -50,10 +50,9 @@ fn write_statics() -> IOResult<()> {
     use std::io::Write;
     use std::path::PathBuf;
 
-    let ver = if is_development_version() {
-        format!("exa v{} ({} built on {})", cargo_version(), git_hash(), build_date())
-    } else {
-        format!("exa v{}", cargo_version())
+    let ver = match is_development_version() {
+        true   => format!("exa v{} ({} built on {})", cargo_version(), git_hash(), build_date()),
+        false  => format!("exa v{}", cargo_version()),
     };
 
     let out = PathBuf::from(env::var("OUT_DIR").unwrap());
