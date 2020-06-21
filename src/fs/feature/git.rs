@@ -282,7 +282,6 @@ fn working_tree_status(status: git2::Status) -> f::GitStatus {
         s if s.contains(git2::Status::WT_RENAMED)     => f::GitStatus::Renamed,
         s if s.contains(git2::Status::WT_TYPECHANGE)  => f::GitStatus::TypeChange,
         s if s.contains(git2::Status::IGNORED)        => f::GitStatus::Ignored,
-        s if s.contains(git2::Status::CONFLICTED)     => f::GitStatus::Conflicted,
         _                                             => f::GitStatus::NotModified,
     }
 }

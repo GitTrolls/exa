@@ -104,7 +104,6 @@ pub struct Git {
     pub renamed: Style,
     pub typechange: Style,
     pub ignored: Style,
-    pub conflicted: Style,
 }
 
 impl Colours {
@@ -169,7 +168,6 @@ impl Colours {
                 renamed:     Yellow.normal(),
                 typechange:  Purple.normal(),
                 ignored:     Style::default().dimmed(),
-                conflicted:  Red.normal(),
             },
 
             punctuation:  Fixed(244).normal(),
@@ -396,7 +394,6 @@ impl render::GitColours for Colours {
     fn renamed(&self)       -> Style { self.git.renamed }
     fn type_change(&self)   -> Style { self.git.typechange }
     fn ignored(&self)       -> Style { self.git.ignored }
-    fn conflicted(&self)    -> Style { self.git.conflicted }
 }
 
 impl render::GroupColours for Colours {
