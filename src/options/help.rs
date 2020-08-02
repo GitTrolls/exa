@@ -56,9 +56,8 @@ LONG VIEW OPTIONS
   --no-user          suppress the user field
   --no-time          suppress the time field"##;
 
-static GIT_HELP:      &str = r##"  --git               list each file's Git status, if tracked or ignored"##;
-static EXTENDED_HELP: &str = r##"  -@, --extended      list each file's extended attributes and sizes"##;
-static OCTAL_HELP:    &str = r##"  --octal-permissions list each file's permission in octal format"##;
+static GIT_HELP:      &str = r##"  --git              list each file's Git status, if tracked or ignored"##;
+static EXTENDED_HELP: &str = r##"  -@, --extended     list each file's extended attributes and sizes"##;
 
 
 /// All the information needed to display the help text, which depends
@@ -119,8 +118,6 @@ impl fmt::Display for HelpString {
         if self.xattrs {
             write!(f, "\n{}", EXTENDED_HELP)?;
         }
-
-        write!(f, "\n{}", OCTAL_HELP)?;
 
         Ok(())
     }

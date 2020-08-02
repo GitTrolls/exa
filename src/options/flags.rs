@@ -60,9 +60,8 @@ pub static NO_USER: Arg = Arg { short: None, long: "no-user", takes_value: Takes
 pub static NO_TIME: Arg = Arg { short: None, long: "no-time", takes_value: TakesValue::Forbidden };
 
 // optional feature options
-pub static GIT:       Arg = Arg { short: None,       long: "git",               takes_value: TakesValue::Forbidden };
-pub static EXTENDED:  Arg = Arg { short: Some(b'@'), long: "extended",          takes_value: TakesValue::Forbidden };
-pub static OCTAL:     Arg = Arg { short: None,       long: "octal-permissions", takes_value: TakesValue::Forbidden };
+pub static GIT:       Arg = Arg { short: None,       long: "git",      takes_value: TakesValue::Forbidden };
+pub static EXTENDED:  Arg = Arg { short: Some(b'@'), long: "extended", takes_value: TakesValue::Forbidden };
 
 
 pub static ALL_ARGS: Args = Args(&[
@@ -78,5 +77,5 @@ pub static ALL_ARGS: Args = Args(&[
     &BLOCKS, &TIME, &ACCESSED, &CREATED, &TIME_STYLE,
     &NO_PERMISSIONS, &NO_FILESIZE, &NO_USER, &NO_TIME,
 
-    &GIT, &EXTENDED, &OCTAL
+    &GIT, &EXTENDED,
 ]);
