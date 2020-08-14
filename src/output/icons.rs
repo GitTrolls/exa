@@ -119,6 +119,7 @@ fn icon(file: &File) -> char {
                 "sass"      => '\u{e74b}',
                 "stylus"    => '\u{e759}',
                 "scala"     => '\u{e737}',
+                "sh"        => '\u{f489}',
                 "shell"     => '\u{f489}',
                 "sqlite3"   => '\u{e7c4}',
                 "styl"      => '\u{e600}',
@@ -185,7 +186,6 @@ fn icon(file: &File) -> char {
                 "groovy"    => '\u{e775}',
                 "iso"       => '\u{e271}',
                 "lock"      => '\u{f023}',
-                "swift"     => '\u{e755}',
                 _           => '\u{f15b}'
             }
         } else {
