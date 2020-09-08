@@ -1,5 +1,4 @@
 use std::cmp::max;
-use std::env;
 use std::fmt;
 use std::ops::Deref;
 use std::sync::{Mutex, MutexGuard};
@@ -287,11 +286,7 @@ impl Environment {
 }
 
 fn determine_time_zone() -> TZResult<TimeZone> {
-    if let Ok(file) = env::var("TZ") {
-        TimeZone::from_file(format!("/usr/share/zoneinfo/{}", file))
-    } else {
-        TimeZone::from_file("/etc/localtime")
-    }
+    TimeZone::from_file("/etc/localtime")
 }
 
 
