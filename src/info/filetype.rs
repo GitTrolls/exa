@@ -26,7 +26,7 @@ impl FileExtensions {
             "Makefile", "Cargo.toml", "SConstruct", "CMakeLists.txt",
             "build.gradle", "pom.xml", "Rakefile", "package.json", "Gruntfile.js",
             "Gruntfile.coffee", "BUILD", "BUILD.bazel", "WORKSPACE", "build.xml",
-            "webpack.config.js", "meson.build",
+            "webpack.config.js", "meson.build", "composer.json", "RoboFile.php",
         ])
     }
 
@@ -67,9 +67,9 @@ impl FileExtensions {
 
     fn is_document(&self, file: &File) -> bool {
         file.extension_is_one_of( &[
-            "djvu", "doc", "docx", "dvi", "eml", "eps", "fotd",
-            "odp", "odt", "pdf", "ppt", "pptx", "rtf",
-            "xls", "xlsx",
+            "djvu", "doc", "docx", "dvi", "eml", "eps", "fotd", "key",
+            "keynote", "numbers", "odp", "odt", "pages", "pdf", "ppt",
+            "pptx", "rtf", "xls", "xlsx",
         ])
     }
 
@@ -88,7 +88,7 @@ impl FileExtensions {
     }
 
     fn is_compiled(&self, file: &File) -> bool {
-        if file.extension_is_one_of( &[ "class", "elc", "hi", "o", "pyc", "zwc" ]) {
+        if file.extension_is_one_of( &[ "class", "elc", "hi", "o", "pyc", "zwc", "ko" ]) {
             true
         }
         else if let Some(dir) = file.parent_dir {

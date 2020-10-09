@@ -87,6 +87,11 @@ pub struct PermissionsPlus {
 }
 
 
+/// The permissions encoded as octal values
+pub struct OctalPermissions {
+    pub permissions: Permissions,
+}
+
 /// A file’s number of hard links on the filesystem.
 ///
 /// Under Unix, a file can exist on the filesystem only once but appear in
@@ -177,6 +182,7 @@ pub struct Time {
 /// A file’s status in a Git repository. Whether a file is in a repository or
 /// not is handled by the Git module, rather than having a “null” variant in
 /// this enum.
+#[derive(PartialEq)]
 pub enum GitStatus {
 
     /// This file hasn’t changed since the last commit.
@@ -200,6 +206,9 @@ pub enum GitStatus {
 
     /// A file that’s ignored (that matches a line in .gitignore)
     Ignored,
+
+    /// A file that's updated but unmerged.
+    Conflicted,
 }
 
 /// A file’s complete Git status. It’s possible to make changes to a file, add
