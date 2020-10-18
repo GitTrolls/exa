@@ -1,5 +1,5 @@
-all: build test xtests
-all-release: build-release test-release xtests-release
+all: build test
+all-release: build-release test-release
 
 
 # compiles the exa binary
@@ -26,15 +26,6 @@ all-release: build-release test-release xtests-release
 # runs unit tests with every combination of feature flags
 @test-features:
     cargo hack test --feature-powerset -- --quiet
-
-
-# runs extended tests
-@xtests:
-    xtests/run.sh
-
-# runs extended tests (using the release mode exa)
-@xtests-release:
-    xtests/run.sh --release
 
 
 # lints the code
