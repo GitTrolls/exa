@@ -27,7 +27,7 @@ pub mod git {
         }
 
         pub fn get(&self, _index: &Path, _prefix_lookup: bool) -> f::Git {
-            unreachable!();
+            panic!("Tried to query a Git cache, but Git support is disabled")
         }
     }
 }

@@ -3,7 +3,6 @@ use std::io::{self, Write};
 use term_grid as tg;
 
 use crate::fs::File;
-use crate::fs::filter::FileFilter;
 use crate::output::file_name::Options as FileStyle;
 use crate::theme::Theme;
 
@@ -27,11 +26,10 @@ pub struct Render<'a> {
     pub file_style: &'a FileStyle,
     pub opts: &'a Options,
     pub console_width: usize,
-    pub filter: &'a FileFilter,
 }
 
 impl<'a> Render<'a> {
-    pub fn render<W: Write>(mut self, w: &mut W) -> io::Result<()> {
+    pub fn render<W: Write>(&self, w: &mut W) -> io::Result<()> {
         let mut grid = tg::Grid::new(tg::GridOptions {
             direction:  self.opts.direction(),
             filling:    tg::Filling::Spaces(2),
@@ -39,7 +37,6 @@ impl<'a> Render<'a> {
 
         grid.reserve(self.files.len());
 
-        self.filter.sort_files(&mut self.files);
         for file in &self.files {
             let filename = self.file_style.for_file(file, self.theme).paint();
 
