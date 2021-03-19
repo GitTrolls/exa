@@ -22,7 +22,6 @@ __exa() {
         --colo{,u}r"[When to use terminal colours]" \
         --colo{,u}r-scale"[Highlight levels of file sizes distinctly]" \
         --icons"[Display icons]" \
-        --no-icons"[Hide icons]" \
         --group-directories-first"[Sort directories before other files]" \
         --git-ignore"[Ignore files mentioned in '.gitignore']" \
         {-a,--all}"[Show hidden and 'dot' files]" \
@@ -40,6 +39,7 @@ __exa() {
         {-H,--links}"[List each file's number of hard links]" \
         {-i,--inode}"[List each file's inode number]" \
         {-m,--modified}"[Use the modified timestamp field]" \
+        {-n, --numeric-uid-gid}"[List numeric user and group IDs.]" \
         {-S,--blocks}"[List each file's number of filesystem blocks]" \
         {-t,--time}="[Which time field to show]:(time field):(accessed changed created modified)" \
         --time-style="[How to format timestamps]:(time style):(default iso long-iso full-iso)" \
