@@ -4,7 +4,7 @@ use crate::options::parser::MatchedFlags;
 use crate::output::{View, Mode, TerminalWidth, grid, details};
 use crate::output::grid_details::{self, RowThreshold};
 use crate::output::file_name::Options as FileStyle;
-use crate::output::table::{TimeTypes, SizeFormat, Columns, Options as TableOptions};
+use crate::output::table::{TimeTypes, SizeFormat, UserFormat, Columns, Options as TableOptions};
 use crate::output::time::TimeFormat;
 
 
@@ -91,7 +91,7 @@ impl Mode {
                 }
             }
 
-            if matches.has(&flags::GIT)? {
+            if cfg!(feature = "git") && matches.has(&flags::GIT)? {
                 return Err(OptionsError::Useless(&flags::GIT, false, &flags::LONG));
             }
             else if matches.has(&flags::LEVEL)? && ! matches.has(&flags::RECURSE)? && ! matches.has(&flags::TREE)? {
@@ -183,8 +183,9 @@ impl TableOptions {
     fn deduce<V: Vars>(matches: &MatchedFlags<'_>, vars: &V) -> Result<Self, OptionsError> {
         let time_format = TimeFormat::deduce(matches, vars)?;
         let size_format = SizeFormat::deduce(matches)?;
+        let user_format = UserFormat::deduce(matches)?;
         let columns = Columns::deduce(matches)?;
-        Ok(Self { time_format, size_format, columns })
+        Ok(Self { time_format, size_format, columns , user_format})
     }
 }
 
@@ -192,7 +193,7 @@ impl TableOptions {
 impl Columns {
     fn deduce(matches: &MatchedFlags<'_>) -> Result<Self, OptionsError> {
         let time_types = TimeTypes::deduce(matches)?;
-        let git = matches.has(&flags::GIT)?;
+        let git = cfg!(feature = "git") && matches.has(&flags::GIT)?;
 
         let blocks = matches.has(&flags::BLOCKS)?;
         let group  = matches.has(&flags::GROUP)?;
@@ -262,6 +263,14 @@ impl TimeFormat {
         else {
             Err(OptionsError::BadArgument(&flags::TIME_STYLE, word))
         }
+    }
+}
+
+
+impl UserFormat {
+    fn deduce(matches: &MatchedFlags<'_>) -> Result<Self, OptionsError> {
+        let flag = matches.has(&flags::NUM_UGID)?;
+        Ok(if flag { Self::Numeric } else { Self::Name })
     }
 }
 

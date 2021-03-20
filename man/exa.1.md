@@ -72,9 +72,6 @@ Valid settings are ‘`always`’, ‘`automatic`’, and ‘`never`’.
 `--icons`
 : Display icons next to file names.
 
-`--no-icons`
-: Don't display icons. (Always overrides --icons)
-
 
 FILTERING AND SORTING OPTIONS
 =============================
@@ -104,7 +101,7 @@ Sort fields starting with a capital letter will sort uppercase before lowercase:
 `-I`, `--ignore-glob=GLOBS`
 : Glob patterns, pipe-separated, of files to ignore.
 
-`--git-ignore` [if exa was built with git support]
+`--git-ignore`
 : Do not list files that are ignored by Git.
 
 `--group-directories-first`
@@ -143,6 +140,9 @@ These options are available when running with `--long` (`-l`):
 `-m`, `--modified`
 : Use the modified timestamp field.
 
+`-n`, `--numeric-uid-gid`
+: List numeric user and group IDs.
+
 `-S`, `--blocks`
 : List each file’s number of file system blocks.
 
@@ -177,7 +177,7 @@ These options are available when running with `--long` (`-l`):
 `-@`, `--extended`
 : List each file’s extended attributes and sizes.
 
-`--git`  [if exa was built with git support]
+`--git`
 : List each file’s Git status, if tracked.
 
 
