@@ -3,11 +3,10 @@ use users::{Users, Groups};
 
 use crate::fs::fields as f;
 use crate::output::cell::TextCell;
-use crate::output::table::UserFormat;
 
 
 impl f::Group {
-    pub fn render<C: Colours, U: Users+Groups>(self, colours: &C, users: &U, format: UserFormat) -> TextCell {
+    pub fn render<C: Colours, U: Users+Groups>(self, colours: &C, users: &U) -> TextCell {
         use users::os::unix::GroupExt;
 
         let mut style = colours.not_yours();
@@ -27,12 +26,7 @@ impl f::Group {
             }
         }
 
-        let group_name = match format {
-            UserFormat::Name => group.name().to_string_lossy().into(),
-            UserFormat::Numeric => group.gid().to_string(),
-        };
-
-        TextCell::paint(style, group_name)
+        TextCell::paint(style, group.name().to_string_lossy().into())
     }
 }
 
@@ -49,7 +43,6 @@ pub mod test {
     use super::Colours;
     use crate::fs::fields as f;
     use crate::output::cell::TextCell;
-    use crate::output::table::UserFormat;
 
     use users::{User, Group};
     use users::mock::MockUsers;
@@ -73,12 +66,8 @@ pub mod test {
 
         let group = f::Group(100);
         let expected = TextCell::paint_str(Fixed(81).normal(), "folk");
-        assert_eq!(expected, group.render(&TestColours, &users, UserFormat::Name));
-
-        let expected = TextCell::paint_str(Fixed(81).normal(), "100");
-        assert_eq!(expected, group.render(&TestColours, &users, UserFormat::Numeric));
+        assert_eq!(expected, group.render(&TestColours, &users))
     }
-
 
     #[test]
     fn unnamed() {
@@ -86,8 +75,7 @@ pub mod test {
 
         let group = f::Group(100);
         let expected = TextCell::paint_str(Fixed(81).normal(), "100");
-        assert_eq!(expected, group.render(&TestColours, &users, UserFormat::Name));
-        assert_eq!(expected, group.render(&TestColours, &users, UserFormat::Numeric));
+        assert_eq!(expected, group.render(&TestColours, &users));
     }
 
     #[test]
@@ -98,7 +86,7 @@ pub mod test {
 
         let group = f::Group(100);
         let expected = TextCell::paint_str(Fixed(80).normal(), "folk");
-        assert_eq!(expected, group.render(&TestColours, &users, UserFormat::Name))
+        assert_eq!(expected, group.render(&TestColours, &users))
     }
 
     #[test]
@@ -111,13 +99,13 @@ pub mod test {
 
         let group = f::Group(100);
         let expected = TextCell::paint_str(Fixed(80).normal(), "folk");
-        assert_eq!(expected, group.render(&TestColours, &users, UserFormat::Name))
+        assert_eq!(expected, group.render(&TestColours, &users))
     }
 
     #[test]
     fn overflow() {
         let group = f::Group(2_147_483_648);
         let expected = TextCell::paint_str(Fixed(81).normal(), "2147483648");
-        assert_eq!(expected, group.render(&TestColours, &MockUsers::with_current_uid(0), UserFormat::Numeric));
+        assert_eq!(expected, group.render(&TestColours, &MockUsers::with_current_uid(0)));
     }
 }
