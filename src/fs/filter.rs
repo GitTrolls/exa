@@ -2,6 +2,7 @@
 
 use std::cmp::Ordering;
 use std::iter::FromIterator;
+#[cfg(unix)]
 use std::os::unix::fs::MetadataExt;
 use std::path::Path;
 
@@ -157,6 +158,7 @@ pub enum SortField {
 
     /// The file’s inode, which usually corresponds to the order in which
     /// files were created on the filesystem, more or less.
+    #[cfg(unix)]
     FileInode,
 
     /// The time the file was modified (the “mtime”).
@@ -183,6 +185,7 @@ pub enum SortField {
     ///
     /// In original Unix, this was, however, meant as creation time.
     /// https://www.bell-labs.com/usr/dmr/www/cacm.html
+    #[cfg(unix)]
     ChangedDate,
 
     /// The time the file was created (the “btime” or “birthtime”).
@@ -250,9 +253,11 @@ impl SortField {
             Self::Name(AaBbCc)  => natord::compare_ignore_case(&a.name, &b.name),
 
             Self::Size          => a.metadata.len().cmp(&b.metadata.len()),
+            #[cfg(unix)]
             Self::FileInode     => a.metadata.ino().cmp(&b.metadata.ino()),
             Self::ModifiedDate  => a.modified_time().cmp(&b.modified_time()),
             Self::AccessedDate  => a.accessed_time().cmp(&b.accessed_time()),
+            #[cfg(unix)]
             Self::ChangedDate   => a.changed_time().cmp(&b.changed_time()),
             Self::CreatedDate   => a.created_time().cmp(&b.created_time()),
             Self::ModifiedAge   => b.modified_time().cmp(&a.modified_time()),  // flip b and a
@@ -374,7 +379,6 @@ pub enum GitIgnore {
 // > By default, all ignore files found are respected. This includes .ignore,
 // > .gitignore, .git/info/exclude and even your global gitignore globs,
 // > usually found in $XDG_CONFIG_HOME/git/ignore.
-
 
 #[cfg(test)]
 mod test_ignores {

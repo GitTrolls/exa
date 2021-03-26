@@ -1,6 +1,7 @@
 //! Files, and methods and fields to access their metadata.
 
 use std::io;
+#[cfg(unix)]
 use std::os::unix::fs::{FileTypeExt, MetadataExt, PermissionsExt};
 use std::path::{Path, PathBuf};
 use std::time::{Duration, SystemTime, UNIX_EPOCH};
@@ -19,7 +20,6 @@ use crate::fs::fields as f;
 /// information queried at least once, so it makes sense to do all this at the
 /// start and hold on to all the information.
 pub struct File<'dir> {
-
     /// The filename portion of this file’s path, including the extension.
     ///
     /// This is used to compare against certain filenames (such as checking if
@@ -97,7 +97,7 @@ impl<'dir> File<'dir> {
         let ext        = File::ext(&path);
 
         debug!("Statting file {:?}", &path);
-        let metadata   = std::fs::symlink_metadata(&path)?;
+        let metadata = std::fs::symlink_metadata(&path)?;
         let is_all_all = true;
         let parent_dir = Some(parent_dir);
 
@@ -174,6 +174,7 @@ impl<'dir> File<'dir> {
     /// Whether this file is both a regular file *and* executable for the
     /// current user. An executable file has a different purpose from an
     /// executable directory, so they should be highlighted differently.
+    #[cfg(unix)]
     pub fn is_executable_file(&self) -> bool {
         let bit = modes::USER_EXECUTE;
         self.is_file() && (self.metadata.permissions().mode() & bit) == bit
@@ -185,25 +186,28 @@ impl<'dir> File<'dir> {
     }
 
     /// Whether this file is a named pipe on the filesystem.
+    #[cfg(unix)]
     pub fn is_pipe(&self) -> bool {
         self.metadata.file_type().is_fifo()
     }
 
     /// Whether this file is a char device on the filesystem.
+    #[cfg(unix)]
     pub fn is_char_device(&self) -> bool {
         self.metadata.file_type().is_char_device()
     }
 
     /// Whether this file is a block device on the filesystem.
+    #[cfg(unix)]
     pub fn is_block_device(&self) -> bool {
         self.metadata.file_type().is_block_device()
     }
 
     /// Whether this file is a socket on the filesystem.
+    #[cfg(unix)]
     pub fn is_socket(&self) -> bool {
         self.metadata.file_type().is_socket()
     }
-
 
     /// Re-prefixes the path pointed to by this file, if it’s a symlink, to
     /// make it an absolute path that can be accessed from whichever
@@ -270,6 +274,7 @@ impl<'dir> File<'dir> {
     /// is uncommon, while you come across directories and other types
     /// with multiple links much more often. Thus, it should get highlighted
     /// more attentively.
+    #[cfg(unix)]
     pub fn links(&self) -> f::Links {
         let count = self.metadata.nlink();
 
@@ -280,6 +285,7 @@ impl<'dir> File<'dir> {
     }
 
     /// This file’s inode.
+    #[cfg(unix)]
     pub fn inode(&self) -> f::Inode {
         f::Inode(self.metadata.ino())
     }
@@ -287,6 +293,7 @@ impl<'dir> File<'dir> {
     /// This file’s number of filesystem blocks.
     ///
     /// (Not the size of each block, which we don’t actually report on)
+    #[cfg(unix)]
     pub fn blocks(&self) -> f::Blocks {
         if self.is_file() || self.is_link() {
             f::Blocks::Some(self.metadata.blocks())
@@ -297,11 +304,13 @@ impl<'dir> File<'dir> {
     }
 
     /// The ID of the user that own this file.
+    #[cfg(unix)]
     pub fn user(&self) -> f::User {
         f::User(self.metadata.uid())
     }
 
     /// The ID of the group that owns this file.
+    #[cfg(unix)]
     pub fn group(&self) -> f::Group {
         f::Group(self.metadata.gid())
     }
@@ -318,6 +327,7 @@ impl<'dir> File<'dir> {
         if self.is_directory() {
             f::Size::None
         }
+        #[cfg(unix)]
         else if self.is_char_device() || self.is_block_device() {
             let dev = self.metadata.rdev();
             f::Size::DeviceIDs(f::DeviceIDs {
@@ -336,6 +346,7 @@ impl<'dir> File<'dir> {
     }
 
     /// This file’s last changed timestamp, if available on this platform.
+    #[cfg(unix)]
     pub fn changed_time(&self) -> Option<SystemTime> {
         let (mut sec, mut nanosec) = (self.metadata.ctime(), self.metadata.ctime_nsec());
 
@@ -369,6 +380,19 @@ impl<'dir> File<'dir> {
     /// This is used a the leftmost character of the permissions column.
     /// The file type can usually be guessed from the colour of the file, but
     /// ls puts this character there.
+    #[cfg(windows)]
+    pub fn type_char(&self) -> f::Type {
+        if self.is_file() {
+            f::Type::File
+        }
+        else if self.is_directory() {
+            f::Type::Directory
+        }
+        else {
+            f::Type::Special
+        }
+    }
+    #[cfg(unix)]
     pub fn type_char(&self) -> f::Type {
         if self.is_file() {
             f::Type::File
@@ -397,6 +421,7 @@ impl<'dir> File<'dir> {
     }
 
     /// This file’s permissions, with flags for each bit.
+    #[cfg(unix)]
     pub fn permissions(&self) -> f::Permissions {
         let bits = self.metadata.mode();
         let has_bit = |bit| bits & bit == bit;
@@ -477,6 +502,7 @@ impl<'dir> FileTarget<'dir> {
 
 /// More readable aliases for the permission bits exposed by libc.
 #[allow(trivial_numeric_casts)]
+#[cfg(unix)]
 mod modes {
 
     // The `libc::mode_t` type’s actual type varies, but the value returned
@@ -555,6 +581,9 @@ mod filename_test {
 
     #[test]
     fn topmost() {
-        assert_eq!("/", File::filename(Path::new("/")))
+        #[cfg(unix)]
+        assert_eq!("/", File::filename(Path::new("/")));
+        #[cfg(windows)]
+        assert_eq!("C:\\", File::filename(Path::new("C:\\")));
     }
 }

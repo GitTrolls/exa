@@ -1,6 +1,7 @@
 use std::cmp::max;
 use std::env;
 use std::ops::Deref;
+#[cfg(unix)]
 use std::sync::{Mutex, MutexGuard};
 
 use datetime::TimeZone;
@@ -8,6 +9,7 @@ use zoneinfo_compiled::{CompiledData, Result as TZResult};
 
 use lazy_static::lazy_static;
 use log::*;
+#[cfg(unix)]
 use users::UsersCache;
 
 use crate::fs::{File, fields as f};
@@ -29,7 +31,6 @@ pub struct Options {
 /// Extra columns to display in the table.
 #[derive(PartialEq, Debug, Copy, Clone)]
 pub struct Columns {
-
     /// At least one of these timestamps will be shown.
     pub time_types: TimeTypes,
 
@@ -48,10 +49,12 @@ pub struct Columns {
 }
 
 impl Columns {
+
     pub fn collect(&self, actually_enable_git: bool) -> Vec<Column> {
         let mut columns = Vec::with_capacity(4);
 
         if self.inode {
+            #[cfg(unix)]
             columns.push(Column::Inode);
         }
 
@@ -60,10 +63,12 @@ impl Columns {
         }
 
         if self.permissions {
+            #[cfg(unix)]
             columns.push(Column::Permissions);
         }
 
         if self.links {
+            #[cfg(unix)]
             columns.push(Column::HardLinks);
         }
 
@@ -72,30 +77,37 @@ impl Columns {
         }
 
         if self.blocks {
+            #[cfg(unix)]
             columns.push(Column::Blocks);
         }
 
         if self.user {
+            #[cfg(unix)]
             columns.push(Column::User);
         }
 
         if self.group {
+            #[cfg(unix)]
             columns.push(Column::Group);
         }
 
         if self.time_types.modified {
+            #[cfg(unix)]
             columns.push(Column::Timestamp(TimeType::Modified));
         }
 
         if self.time_types.changed {
+            #[cfg(unix)]
             columns.push(Column::Timestamp(TimeType::Changed));
         }
 
         if self.time_types.created {
+            #[cfg(unix)]
             columns.push(Column::Timestamp(TimeType::Created));
         }
 
         if self.time_types.accessed {
+            #[cfg(unix)]
             columns.push(Column::Timestamp(TimeType::Accessed));
         }
 
@@ -111,13 +123,20 @@ impl Columns {
 /// A table contains these.
 #[derive(Debug, Copy, Clone)]
 pub enum Column {
+    #[cfg(unix)]
     Permissions,
     FileSize,
+    #[cfg(unix)]
     Timestamp(TimeType),
+    #[cfg(unix)]
     Blocks,
+    #[cfg(unix)]
     User,
+    #[cfg(unix)]
     Group,
+    #[cfg(unix)]
     HardLinks,
+    #[cfg(unix)]
     Inode,
     GitStatus,
     Octal,
@@ -134,6 +153,7 @@ pub enum Alignment {
 impl Column {
 
     /// Get the alignment this column should use.
+    #[cfg(unix)]
     pub fn alignment(self) -> Alignment {
         match self {
             Self::FileSize   |
@@ -144,18 +164,33 @@ impl Column {
             _                => Alignment::Left,
         }
     }
+    #[cfg(windows)]
+    pub fn alignment(&self) -> Alignment {
+        match *self {
+            Column::FileSize | Column::GitStatus => Alignment::Right,
+            _ => Alignment::Left,
+        }
+    }
+    #[cfg(windows)]
 
     /// Get the text that should be printed at the top, when the user elects
     /// to have a header row printed.
     pub fn header(self) -> &'static str {
         match self {
+            #[cfg(unix)]
             Self::Permissions   => "Permissions",
             Self::FileSize      => "Size",
+            #[cfg(unix)]
             Self::Timestamp(t)  => t.header(),
+            #[cfg(unix)]
             Self::Blocks        => "Blocks",
+            #[cfg(unix)]
             Self::User          => "User",
+            #[cfg(unix)]
             Self::Group         => "Group",
+            #[cfg(unix)]
             Self::HardLinks     => "Links",
+            #[cfg(unix)]
             Self::Inode         => "inode",
             Self::GitStatus     => "Git",
             Self::Octal         => "Octal",
@@ -218,7 +253,6 @@ impl TimeType {
     }
 }
 
-
 /// Fields for which of a file’s time fields should be displayed in the
 /// columns output.
 ///
@@ -262,10 +296,12 @@ pub struct Environment {
     tz: Option<TimeZone>,
 
     /// Mapping cache of user IDs to usernames.
+    #[cfg(unix)]
     users: Mutex<UsersCache>,
 }
 
 impl Environment {
+    #[cfg(unix)]
     pub fn lock_users(&self) -> MutexGuard<'_, UsersCache> {
         self.users.lock().unwrap()
     }
@@ -284,9 +320,10 @@ impl Environment {
         let numeric = locale::Numeric::load_user_locale()
                              .unwrap_or_else(|_| locale::Numeric::english());
 
+        #[cfg(unix)]
         let users = Mutex::new(UsersCache::new());
 
-        Self { tz, numeric, users }
+        Self { tz, numeric, #[cfg(unix)] users }
     }
 }
 
@@ -363,6 +400,7 @@ impl<'a, 'f> Table<'a> {
     fn permissions_plus(&self, file: &File<'_>, xattrs: bool) -> f::PermissionsPlus {
         f::PermissionsPlus {
             file_type: file.type_char(),
+            #[cfg(unix)]
             permissions: file.permissions(),
             xattrs,
         }
@@ -376,24 +414,30 @@ impl<'a, 'f> Table<'a> {
 
     fn display(&self, file: &File<'_>, column: Column, xattrs: bool) -> TextCell {
         match column {
+            #[cfg(unix)]
             Column::Permissions => {
                 self.permissions_plus(file, xattrs).render(self.theme)
             }
             Column::FileSize => {
                 file.size().render(self.theme, self.size_format, &self.env.numeric)
             }
+            #[cfg(unix)]
             Column::HardLinks => {
                 file.links().render(self.theme, &self.env.numeric)
             }
+            #[cfg(unix)]
             Column::Inode => {
                 file.inode().render(self.theme.ui.inode)
             }
+            #[cfg(unix)]
             Column::Blocks => {
                 file.blocks().render(self.theme)
             }
+            #[cfg(unix)]
             Column::User => {
                 file.user().render(self.theme, &*self.env.lock_users())
             }
+            #[cfg(unix)]
             Column::Group => {
                 file.group().render(self.theme, &*self.env.lock_users())
             }
