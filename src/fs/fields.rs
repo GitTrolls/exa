@@ -88,7 +88,6 @@ pub struct Permissions {
 #[derive(Copy, Clone)]
 pub struct PermissionsPlus {
     pub file_type:   Type,
-    #[cfg(unix)]
     pub permissions: Permissions,
     pub xattrs:      bool,
 }
