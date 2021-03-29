@@ -235,7 +235,6 @@ impl<'a, 'dir, C: Colours> FileName<'a, 'dir, C> {
 
     /// The character to be displayed after a file when classifying is on, if
     /// the file’s type has one associated with it.
-    #[cfg(unix)]
     fn classify_char(&self) -> Option<&'static str> {
         if self.file.is_executable_file() {
             Some("*")
@@ -251,19 +250,6 @@ impl<'a, 'dir, C: Colours> FileName<'a, 'dir, C> {
         }
         else if self.file.is_socket() {
             Some("=")
-        }
-        else {
-            None
-        }
-    }
-
-    #[cfg(windows)]
-    fn classify_char(&self) -> Option<&'static str> {
-        if self.file.is_directory() {
-            Some("/")
-        }
-        else if self.file.is_link() {
-            Some("@")
         }
         else {
             None
@@ -309,16 +295,11 @@ impl<'a, 'dir, C: Colours> FileName<'a, 'dir, C> {
 
         match self.file {
             f if f.is_directory()        => self.colours.directory(),
-            #[cfg(unix)]
             f if f.is_executable_file()  => self.colours.executable_file(),
             f if f.is_link()             => self.colours.symlink(),
-            #[cfg(unix)]
             f if f.is_pipe()             => self.colours.pipe(),
-            #[cfg(unix)]
             f if f.is_block_device()     => self.colours.block_device(),
-            #[cfg(unix)]
             f if f.is_char_device()      => self.colours.char_device(),
-            #[cfg(unix)]
             f if f.is_socket()           => self.colours.socket(),
             f if ! f.is_file()           => self.colours.special(),
             _                            => self.colours.colour_file(self.file),
