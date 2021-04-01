@@ -100,7 +100,7 @@ impl Columns {
             columns.push(Column::Timestamp(TimeType::Accessed));
         }
 
-        if cfg!(feature = "git") && self.git && actually_enable_git {
+        if self.git && actually_enable_git {
             columns.push(Column::GitStatus);
         }
 
@@ -302,9 +302,20 @@ impl Environment {
 
 fn determine_time_zone() -> TZResult<TimeZone> {
     if let Ok(file) = env::var("TZ") {
-        TimeZone::from_file(format!("/usr/share/zoneinfo/{}", file))
-    }
-    else {
+        TimeZone::from_file({
+            if file.starts_with("/") {
+                file
+            } else {
+                format!("/usr/share/zoneinfo/{}", {
+                    if file.starts_with(":") {
+                        file.replacen(":", "", 1)
+                    } else {
+                        file
+                    }
+                })
+            }
+        })
+    } else {
         TimeZone::from_file("/etc/localtime")
     }
 }
