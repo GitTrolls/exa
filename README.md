@@ -47,6 +47,7 @@ exa’s options are almost, but not quite, entirely unlike `ls`’s.
 - **--colo[u]r**: when to use terminal colours
 - **--colo[u]r-scale**: highlight levels of file sizes distinctly
 - **--icons**: display icons
+- **--no-icons**: don't display icons (always overrides --icons)
 
 ### Filtering options
 
@@ -82,6 +83,7 @@ These options are available when running with `--long` (`-l`):
 - **--git**: list each file’s Git status, if tracked or ignored
 - **--time-style**: how to format timestamps
 - **--no-permissions**: suppress the permissions field
+- **--octal-permissions**: list each file's permission in octal format
 - **--no-filesize**: suppress the filesize field
 - **--no-user**: suppress the user field
 - **--no-time**: suppress the time field
@@ -168,7 +170,7 @@ On openSUSE, install the [`exa`](https://software.opensuse.org/package/exa) pack
 
 On Ubuntu 20.10 (Groovy Gorilla) and later, install the [`exa`](https://packages.ubuntu.com/groovy/exa) package.
 
-    $ apt install exa
+    $ sudo apt install exa
 
 ### Void Linux
 
