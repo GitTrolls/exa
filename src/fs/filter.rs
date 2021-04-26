@@ -2,7 +2,6 @@
 
 use std::cmp::Ordering;
 use std::iter::FromIterator;
-#[cfg(unix)]
 use std::os::unix::fs::MetadataExt;
 use std::path::Path;
 
@@ -158,7 +157,6 @@ pub enum SortField {
 
     /// The file’s inode, which usually corresponds to the order in which
     /// files were created on the filesystem, more or less.
-    #[cfg(unix)]
     FileInode,
 
     /// The time the file was modified (the “mtime”).
@@ -252,7 +250,6 @@ impl SortField {
             Self::Name(AaBbCc)  => natord::compare_ignore_case(&a.name, &b.name),
 
             Self::Size          => a.metadata.len().cmp(&b.metadata.len()),
-            #[cfg(unix)]
             Self::FileInode     => a.metadata.ino().cmp(&b.metadata.ino()),
             Self::ModifiedDate  => a.modified_time().cmp(&b.modified_time()),
             Self::AccessedDate  => a.accessed_time().cmp(&b.accessed_time()),
