@@ -292,7 +292,6 @@ pub fn icon_for_file(file: &File<'_>) -> char {
             "so"            => '\u{f17c}', // 
             "sql"           => '\u{f1c0}', // 
             "sqlite3"       => '\u{e7c4}', // 
-            "sty"           => '\u{f034}', // 
             "styl"          => '\u{e600}', // 
             "stylus"        => '\u{e600}', // 
             "svg"           => '\u{f1c5}', // 
