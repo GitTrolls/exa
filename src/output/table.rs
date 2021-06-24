@@ -1,7 +1,6 @@
 use std::cmp::max;
 use std::env;
 use std::ops::Deref;
-#[cfg(unix)]
 use std::sync::{Mutex, MutexGuard};
 
 use datetime::TimeZone;
@@ -9,7 +8,6 @@ use zoneinfo_compiled::{CompiledData, Result as TZResult};
 
 use lazy_static::lazy_static;
 use log::*;
-#[cfg(unix)]
 use users::UsersCache;
 
 use crate::fs::{File, fields as f};
@@ -56,12 +54,10 @@ impl Columns {
         let mut columns = Vec::with_capacity(4);
 
         if self.inode {
-            #[cfg(unix)]
             columns.push(Column::Inode);
         }
 
         if self.octal {
-            #[cfg(unix)]
             columns.push(Column::Octal);
         }
 
@@ -70,7 +66,6 @@ impl Columns {
         }
 
         if self.links {
-            #[cfg(unix)]
             columns.push(Column::HardLinks);
         }
 
@@ -79,17 +74,14 @@ impl Columns {
         }
 
         if self.blocks {
-            #[cfg(unix)]
             columns.push(Column::Blocks);
         }
 
         if self.user {
-            #[cfg(unix)]
             columns.push(Column::User);
         }
 
         if self.group {
-            #[cfg(unix)]
             columns.push(Column::Group);
         }
 
@@ -124,18 +116,12 @@ pub enum Column {
     Permissions,
     FileSize,
     Timestamp(TimeType),
-    #[cfg(unix)]
     Blocks,
-    #[cfg(unix)]
     User,
-    #[cfg(unix)]
     Group,
-    #[cfg(unix)]
     HardLinks,
-    #[cfg(unix)]
     Inode,
     GitStatus,
-    #[cfg(unix)]
     Octal,
 }
 
@@ -150,7 +136,6 @@ pub enum Alignment {
 impl Column {
 
     /// Get the alignment this column should use.
-    #[cfg(unix)]
     pub fn alignment(self) -> Alignment {
         match self {
             Self::FileSize   |
@@ -162,37 +147,19 @@ impl Column {
         }
     }
 
-    #[cfg(windows)]
-    pub fn alignment(&self) -> Alignment {
-        match self {
-            Self::FileSize   |
-            Self::GitStatus  => Alignment::Right,
-            _                => Alignment::Left,
-        }
-    }
-
     /// Get the text that should be printed at the top, when the user elects
     /// to have a header row printed.
     pub fn header(self) -> &'static str {
         match self {
-            #[cfg(unix)]
             Self::Permissions   => "Permissions",
-            #[cfg(windows)]
-            Self::Permissions   => "Mode",
             Self::FileSize      => "Size",
             Self::Timestamp(t)  => t.header(),
-            #[cfg(unix)]
             Self::Blocks        => "Blocks",
-            #[cfg(unix)]
             Self::User          => "User",
-            #[cfg(unix)]
             Self::Group         => "Group",
-            #[cfg(unix)]
             Self::HardLinks     => "Links",
-            #[cfg(unix)]
             Self::Inode         => "inode",
             Self::GitStatus     => "Git",
-            #[cfg(unix)]
             Self::Octal         => "Octal",
         }
     }
@@ -307,12 +274,10 @@ pub struct Environment {
     tz: Option<TimeZone>,
 
     /// Mapping cache of user IDs to usernames.
-    #[cfg(unix)]
     users: Mutex<UsersCache>,
 }
 
 impl Environment {
-    #[cfg(unix)]
     pub fn lock_users(&self) -> MutexGuard<'_, UsersCache> {
         self.users.lock().unwrap()
     }
@@ -331,14 +296,12 @@ impl Environment {
         let numeric = locale::Numeric::load_user_locale()
                              .unwrap_or_else(|_| locale::Numeric::english());
 
-        #[cfg(unix)]
         let users = Mutex::new(UsersCache::new());
 
-        Self { numeric, tz, #[cfg(unix)] users }
+        Self { numeric, tz, users }
     }
 }
 
-#[cfg(unix)]
 fn determine_time_zone() -> TZResult<TimeZone> {
     if let Ok(file) = env::var("TZ") {
         TimeZone::from_file({
@@ -357,31 +320,6 @@ fn determine_time_zone() -> TZResult<TimeZone> {
     } else {
         TimeZone::from_file("/etc/localtime")
     }
-}
-
-#[cfg(windows)]
-fn determine_time_zone() -> TZResult<TimeZone> {
-    use datetime::zone::{FixedTimespan, FixedTimespanSet, StaticTimeZone, TimeZoneSource};
-    use std::borrow::Cow;
-
-    Ok(TimeZone(TimeZoneSource::Static(&StaticTimeZone {
-        name: "Unsupported",
-        fixed_timespans: FixedTimespanSet {
-            first: FixedTimespan {
-                offset: 0,
-                is_dst: false,
-                name: Cow::Borrowed("ZONE_A"),
-            },
-            rest: &[(
-                1206838800,
-                FixedTimespan {
-                    offset: 3600,
-                    is_dst: false,
-                    name: Cow::Borrowed("ZONE_B"),
-                },
-            )],
-        },
-    })))
 }
 
 lazy_static! {
@@ -450,15 +388,11 @@ impl<'a, 'f> Table<'a> {
     fn permissions_plus(&self, file: &File<'_>, xattrs: bool) -> f::PermissionsPlus {
         f::PermissionsPlus {
             file_type: file.type_char(),
-            #[cfg(unix)]
             permissions: file.permissions(),
-            #[cfg(windows)]
-            attributes: file.attributes(),
             xattrs,
         }
     }
 
-    #[cfg(unix)]
     fn octal_permissions(&self, file: &File<'_>) -> f::OctalPermissions {
         f::OctalPermissions {
             permissions: file.permissions(),
@@ -473,30 +407,24 @@ impl<'a, 'f> Table<'a> {
             Column::FileSize => {
                 file.size().render(self.theme, self.size_format, &self.env.numeric)
             }
-            #[cfg(unix)]
             Column::HardLinks => {
                 file.links().render(self.theme, &self.env.numeric)
             }
-            #[cfg(unix)]
             Column::Inode => {
                 file.inode().render(self.theme.ui.inode)
             }
-            #[cfg(unix)]
             Column::Blocks => {
                 file.blocks().render(self.theme)
             }
-            #[cfg(unix)]
             Column::User => {
                 file.user().render(self.theme, &*self.env.lock_users(), self.user_format)
             }
-            #[cfg(unix)]
             Column::Group => {
                 file.group().render(self.theme, &*self.env.lock_users(), self.user_format)
             }
             Column::GitStatus => {
                 self.git_status(file).render(self.theme)
             }
-            #[cfg(unix)]
             Column::Octal => {
                 self.octal_permissions(file).render(self.theme.ui.octal)
             }

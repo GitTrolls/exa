@@ -88,7 +88,6 @@ impl SortField {
             "cr" | "created" => {
                 Self::CreatedDate
             }
-            #[cfg(unix)]
             "inode" => {
                 Self::FileInode
             }

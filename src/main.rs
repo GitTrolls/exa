@@ -18,6 +18,7 @@
 #![allow(clippy::non_ascii_literal)]
 #![allow(clippy::option_if_let_else)]
 #![allow(clippy::too_many_lines)]
+#![allow(clippy::unnested_or_patterns)] // TODO: remove this when we support Rust 1.53.0
 #![allow(clippy::unused_self)]
 #![allow(clippy::upper_case_acronyms)]
 #![allow(clippy::wildcard_imports)]
@@ -50,11 +51,6 @@ fn main() {
     use std::process::exit;
 
     logger::configure(env::var_os(vars::EXA_DEBUG));
-
-    #[cfg(windows)]
-    if let Err(e) = ansi_term::enable_ansi_support() {
-        warn!("Failed to enable ANSI support: {}", e);
-    }
 
     let args: Vec<_> = env::args_os().skip(1).collect();
     match Options::parse(args.iter().map(|e| e.as_ref()), &LiveVars) {
