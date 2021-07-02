@@ -206,6 +206,10 @@ pub fn icon_for_file(file: &File<'_>) -> char {
             "jad"           => '\u{e256}', // 
             "jar"           => '\u{e204}', // 
             "java"          => '\u{e204}', // 
+            "jfi"           => '\u{f1c5}', // 
+            "jfif"          => '\u{f1c5}', // 
+            "jif"           => '\u{f1c5}', // 
+            "jpe"           => '\u{f1c5}', // 
             "jpeg"          => '\u{f1c5}', // 
             "jpg"           => '\u{f1c5}', // 
             "js"            => '\u{e74e}', // 
@@ -292,6 +296,7 @@ pub fn icon_for_file(file: &File<'_>) -> char {
             "so"            => '\u{f17c}', // 
             "sql"           => '\u{f1c0}', // 
             "sqlite3"       => '\u{e7c4}', // 
+            "sty"           => '\u{f034}', // 
             "styl"          => '\u{e600}', // 
             "stylus"        => '\u{e600}', // 
             "svg"           => '\u{f1c5}', // 
