@@ -110,6 +110,7 @@ pub fn icon_for_file(file: &File<'_>) -> char {
             "apk"           => '\u{e70e}', // 
             "apple"         => '\u{f179}', // 
             "avi"           => '\u{f03d}', // 
+            "avif"          => '\u{f1c5}', // 
             "avro"          => '\u{e60b}', // 
             "awk"           => '\u{f489}', // 
             "bash"          => '\u{f489}', // 
@@ -215,6 +216,7 @@ pub fn icon_for_file(file: &File<'_>) -> char {
             "js"            => '\u{e74e}', // 
             "json"          => '\u{e60b}', // 
             "jsx"           => '\u{e7ba}', // 
+            "jxl"           => '\u{f1c5}', // 
             "ksh"           => '\u{f489}', // 
             "latex"         => '\u{f034}', // 
             "less"          => '\u{e758}', // 
@@ -225,6 +227,7 @@ pub fn icon_for_file(file: &File<'_>) -> char {
             "log"           => '\u{f18d}', // 
             "lua"           => '\u{e620}', // 
             "lz"            => '\u{f410}', // 
+            "lz4"           => '\u{f410}', // 
             "lzh"           => '\u{f410}', // 
             "lzma"          => '\u{f410}', // 
             "lzo"           => '\u{f410}', // 
