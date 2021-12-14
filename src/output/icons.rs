@@ -83,7 +83,6 @@ lazy_static! {
         m.insert("Makefile", '\u{f489}'); // 
         m.insert("node_modules", '\u{e718}'); // 
         m.insert("npmignore", '\u{e71e}'); // 
-        m.insert("PKGBUILD", '\u{f303}'); // 
         m.insert("rubydoc", '\u{e73b}'); // 
         m.insert("yarn.lock", '\u{e718}'); // 
 
@@ -211,6 +210,7 @@ pub fn icon_for_file(file: &File<'_>) -> char {
             "jfi"           => '\u{f1c5}', // 
             "jfif"          => '\u{f1c5}', // 
             "jif"           => '\u{f1c5}', // 
+            "jl"            => '\u{e624}', // 
             "jpe"           => '\u{f1c5}', // 
             "jpeg"          => '\u{f1c5}', // 
             "jpg"           => '\u{f1c5}', // 
@@ -346,7 +346,6 @@ pub fn icon_for_file(file: &File<'_>) -> char {
             "zsh"           => '\u{f489}', // 
             "zsh-theme"     => '\u{f489}', // 
             "zshrc"         => '\u{f489}', // 
-            "zst"           => '\u{f410}', // 
             _               => '\u{f15b}'  // 
         }
     }
