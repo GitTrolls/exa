@@ -210,7 +210,6 @@ pub fn icon_for_file(file: &File<'_>) -> char {
             "jfi"           => '\u{f1c5}', // 
             "jfif"          => '\u{f1c5}', // 
             "jif"           => '\u{f1c5}', // 
-            "jl"            => '\u{e624}', // 
             "jpe"           => '\u{f1c5}', // 
             "jpeg"          => '\u{f1c5}', // 
             "jpg"           => '\u{f1c5}', // 
@@ -256,6 +255,7 @@ pub fn icon_for_file(file: &File<'_>) -> char {
             "ogg"           => '\u{f001}', // 
             "ogv"           => '\u{f03d}', // 
             "otf"           => '\u{f031}', // 
+            "part"          => '\u{f43a}', // 
             "patch"         => '\u{f440}', // 
             "pdf"           => '\u{f1c1}', // 
             "php"           => '\u{e73d}', // 
@@ -315,6 +315,7 @@ pub fn icon_for_file(file: &File<'_>) -> char {
             "tiff"          => '\u{f1c5}', // 
             "tlz"           => '\u{f410}', // 
             "toml"          => '\u{e615}', // 
+            "torrent"       => '\u{e275}', // 
             "ts"            => '\u{e628}', // 
             "tsv"           => '\u{f1c3}', // 
             "tsx"           => '\u{e7ba}', // 
