@@ -156,6 +156,7 @@ pub fn icon_for_file(file: &File<'_>) -> char {
             "DS_store"      => '\u{f179}', // 
             "dump"          => '\u{f1c0}', // 
             "ebook"         => '\u{e28b}', // 
+            "ebuild"        => '\u{f30d}', // 
             "editorconfig"  => '\u{e615}', // 
             "ejs"           => '\u{e618}', // 
             "elm"           => '\u{e62c}', // 
@@ -210,6 +211,7 @@ pub fn icon_for_file(file: &File<'_>) -> char {
             "jfi"           => '\u{f1c5}', // 
             "jfif"          => '\u{f1c5}', // 
             "jif"           => '\u{f1c5}', // 
+            "jl"            => '\u{e624}', // 
             "jpe"           => '\u{f1c5}', // 
             "jpeg"          => '\u{f1c5}', // 
             "jpg"           => '\u{f1c5}', // 
