@@ -83,6 +83,7 @@ lazy_static! {
         m.insert("Makefile", '\u{f489}'); // 
         m.insert("node_modules", '\u{e718}'); // 
         m.insert("npmignore", '\u{e71e}'); // 
+        m.insert("PKGBUILD", '\u{f303}'); // 
         m.insert("rubydoc", '\u{e73b}'); // 
         m.insert("yarn.lock", '\u{e718}'); // 
 
@@ -118,6 +119,7 @@ pub fn icon_for_file(file: &File<'_>) -> char {
             "bash_profile"  => '\u{f489}', // 
             "bashrc"        => '\u{f489}', // 
             "bat"           => '\u{f17a}', // 
+            "bats"          => '\u{f489}', // 
             "bmp"           => '\u{f1c5}', // 
             "bz"            => '\u{f410}', // 
             "bz2"           => '\u{f410}', // 
@@ -156,6 +158,7 @@ pub fn icon_for_file(file: &File<'_>) -> char {
             "DS_store"      => '\u{f179}', // 
             "dump"          => '\u{f1c0}', // 
             "ebook"         => '\u{e28b}', // 
+            "ebuild"        => '\u{f30d}', // 
             "editorconfig"  => '\u{e615}', // 
             "ejs"           => '\u{e618}', // 
             "elm"           => '\u{e62c}', // 
@@ -256,6 +259,7 @@ pub fn icon_for_file(file: &File<'_>) -> char {
             "ogg"           => '\u{f001}', // 
             "ogv"           => '\u{f03d}', // 
             "otf"           => '\u{f031}', // 
+            "part"          => '\u{f43a}', // 
             "patch"         => '\u{f440}', // 
             "pdf"           => '\u{f1c1}', // 
             "php"           => '\u{e73d}', // 
@@ -315,6 +319,7 @@ pub fn icon_for_file(file: &File<'_>) -> char {
             "tiff"          => '\u{f1c5}', // 
             "tlz"           => '\u{f410}', // 
             "toml"          => '\u{e615}', // 
+            "torrent"       => '\u{e275}', // 
             "ts"            => '\u{e628}', // 
             "tsv"           => '\u{f1c3}', // 
             "tsx"           => '\u{e7ba}', // 
@@ -346,6 +351,7 @@ pub fn icon_for_file(file: &File<'_>) -> char {
             "zsh"           => '\u{f489}', // 
             "zsh-theme"     => '\u{f489}', // 
             "zshrc"         => '\u{f489}', // 
+            "zst"           => '\u{f410}', // 
             _               => '\u{f15b}'  // 
         }
     }
