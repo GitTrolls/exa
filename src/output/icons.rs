@@ -136,6 +136,7 @@ pub fn icon_for_file(file: &File<'_>) -> char {
             "coffee"        => '\u{f0f4}', // 
             "conf"          => '\u{e615}', // 
             "cp"            => '\u{e61d}', // 
+            "cpio"          => '\u{f410}', // 
             "cpp"           => '\u{e61d}', // 
             "cs"            => '\u{f81a}', // 
             "csh"           => '\u{f489}', // 
@@ -214,6 +215,7 @@ pub fn icon_for_file(file: &File<'_>) -> char {
             "jfif"          => '\u{f1c5}', // 
             "jif"           => '\u{f1c5}', // 
             "jl"            => '\u{e624}', // 
+            "jmd"           => '\u{f48a}', // 
             "jpe"           => '\u{f1c5}', // 
             "jpeg"          => '\u{f1c5}', // 
             "jpg"           => '\u{f1c5}', // 
@@ -342,8 +344,8 @@ pub fn icon_for_file(file: &File<'_>) -> char {
             "xhtml"         => '\u{f13b}', // 
             "xls"           => '\u{f1c3}', // 
             "xlsx"          => '\u{f1c3}', // 
-            "xml"           => '\u{fabf}', // 謹
-            "xul"           => '\u{fabf}', // 謹
+            "xml"           => '\u{f121}', // 
+            "xul"           => '\u{f121}', // 
             "xz"            => '\u{f410}', // 
             "yaml"          => '\u{f481}', // 
             "yml"           => '\u{f481}', // 
