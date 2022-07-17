@@ -206,6 +206,7 @@ pub fn icon_for_file(file: &File<'_>) -> char {
             "hxx"           => '\u{f0fd}', // 
             "ico"           => '\u{f1c5}', // 
             "image"         => '\u{f1c5}', // 
+            "img"           => '\u{e271}', // 
             "iml"           => '\u{e7b5}', // 
             "ini"           => '\u{f17a}', // 
             "ipynb"         => '\u{e606}', // 
@@ -272,7 +273,10 @@ pub fn icon_for_file(file: &File<'_>) -> char {
             "pdf"           => '\u{f1c1}', // 
             "php"           => '\u{e73d}', // 
             "pl"            => '\u{e769}', // 
+            "plx"           => '\u{e769}', // 
+            "pm"            => '\u{e769}', // 
             "png"           => '\u{f1c5}', // 
+            "pod"           => '\u{e769}', // 
             "ppt"           => '\u{f1c4}', // 
             "pptx"          => '\u{f1c4}', // 
             "procfile"      => '\u{e21e}', // 
@@ -318,6 +322,7 @@ pub fn icon_for_file(file: &File<'_>) -> char {
             "stylus"        => '\u{e600}', // 
             "svg"           => '\u{f1c5}', // 
             "swift"         => '\u{e755}', // 
+            "t"             => '\u{e769}', // 
             "tar"           => '\u{f410}', // 
             "taz"           => '\u{f410}', // 
             "tbz"           => '\u{f410}', // 
