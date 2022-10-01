@@ -82,13 +82,27 @@ pub struct Permissions {
     pub setuid:         bool,
 }
 
+/// The file's FileAttributes field, available only on Windows.
+#[derive(Copy, Clone)]
+pub struct Attributes {
+    pub archive:         bool,
+    pub directory:       bool,
+    pub readonly:        bool,
+    pub hidden:          bool,
+    pub system:          bool,
+    pub reparse_point:   bool,
+}
+
 /// The three pieces of information that are displayed as a single column in
 /// the details view. These values are fused together to make the output a
 /// little more compressed.
 #[derive(Copy, Clone)]
 pub struct PermissionsPlus {
     pub file_type:   Type,
+    #[cfg(unix)]
     pub permissions: Permissions,
+    #[cfg(windows)]
+    pub attributes:  Attributes,
     pub xattrs:      bool,
 }
 
@@ -162,7 +176,7 @@ pub enum Size {
     /// data is rarely useful — I can’t think of a time when I’ve seen it and
     /// learnt something. So we discard it and just output “-” instead.
     ///
-    /// See this answer for more: http://unix.stackexchange.com/a/68266
+    /// See this answer for more: <https://unix.stackexchange.com/a/68266>
     None,
 
     /// This file is a block or character device, so instead of a size, print
